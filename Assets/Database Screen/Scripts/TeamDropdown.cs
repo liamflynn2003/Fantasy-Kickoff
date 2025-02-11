@@ -1,9 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 
 public class TeamDropdown : MonoBehaviour
 {
@@ -12,6 +12,8 @@ public class TeamDropdown : MonoBehaviour
 
     private string apiKey = "3496853baf021377f539dce314b05abe";
     private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season=2023";
+
+    private Dictionary<string, int> teamIdMap = new Dictionary<string, int>(); // Stores team names and IDs
 
     private void Start()
     {
@@ -52,62 +54,33 @@ public class TeamDropdown : MonoBehaviour
         }
         else
         {
-            // Log the raw JSON response to the console
             Debug.Log("Raw JSON Response: " + request.downloadHandler.text);
 
-            // Deserialize JSON
             TeamApiResponse response = JsonConvert.DeserializeObject<TeamApiResponse>(request.downloadHandler.text);
-
-            // Debugging: Log the response object to check its structure
-            Debug.Log("Converted Response: " + JsonConvert.SerializeObject(response));
-
-            // Check if we have any teams and print their names
-            if (response != null && response.response != null)
-            {
-                foreach (var teamData in response.response)
-                {
-                    if (teamData != null && teamData.team != null)
-                    {
-                        Debug.Log("Team Name: " + teamData.team.name); // Log the team name
-                    }
-                    else
-                    {
-                        Debug.LogWarning("TeamData or Team is null.");
-                    }
-                }
-            }
-            else
-            {
-                Debug.LogWarning("No teams found in the response.");
-            }
-
             PopulateTeamDropdown(response);
         }
     }
 
-
     private void PopulateTeamDropdown(TeamApiResponse response)
     {
         teamDropdown.ClearOptions();
+        teamIdMap.Clear(); // Clear previous team IDs
 
         List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-        Dictionary<string, TMP_Dropdown.OptionData> optionMap = new Dictionary<string, TMP_Dropdown.OptionData>();
 
         foreach (var teamData in response.response)
         {
             TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(teamData.team.name);
             options.Add(option);
-            optionMap[teamData.team.name] = option;
+            teamIdMap[teamData.team.name] = teamData.team.id; // Store team ID
 
             StartCoroutine(LoadLogo(teamData.team.logo, option));
         }
 
         teamDropdown.AddOptions(options);
-
         teamDropdown.value = 0;
         teamDropdown.captionText.text = "Select a Team";
     }
-
 
     private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
     {
@@ -124,7 +97,6 @@ public class TeamDropdown : MonoBehaviour
             Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
 
             option.image = logoSprite;
-
             teamDropdown.RefreshShownValue();
             ForceDropdownRefresh();
         }
@@ -133,11 +105,15 @@ public class TeamDropdown : MonoBehaviour
     private void ForceDropdownRefresh()
     {
         int tempValue = teamDropdown.value;
-        teamDropdown.value = (tempValue == 0) ? 1 : 0; // Toggle value to trigger refresh
+        teamDropdown.value = (tempValue == 0) ? 1 : 0;
         teamDropdown.value = tempValue;
     }
 
-
+    public int GetSelectedTeamId()
+    {
+        string selectedTeam = teamDropdown.options[teamDropdown.value].text;
+        return teamIdMap.ContainsKey(selectedTeam) ? teamIdMap[selectedTeam] : -1;
+    }
 
     private int GetLeagueId(string leagueName)
     {

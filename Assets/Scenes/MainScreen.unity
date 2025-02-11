@@ -2221,7 +2221,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 876433651}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -2234,7 +2234,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 596e643ff28fa6b488c5639dd75515dc, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2585,7 +2585,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 'League:'
+  m_text: 'Teams:'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -2796,7 +2796,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Premier League
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -5097,25 +5097,7 @@ MonoBehaviour:
   m_ItemImage: {fileID: 1174627952}
   m_Value: 0
   m_Options:
-    m_Options:
-    - m_Text: Premier League
-      m_Image: {fileID: 21300000, guid: 596e643ff28fa6b488c5639dd75515dc, type: 3}
-    - m_Text: Championship
-      m_Image: {fileID: 21300000, guid: bd9184a02835ba14a8e097daef23e334, type: 3}
-    - m_Text: La Liga
-      m_Image: {fileID: 21300000, guid: 0ec59ad50633a5e4e8da777e5cc76076, type: 3}
-    - m_Text: Serie A
-      m_Image: {fileID: 21300000, guid: 4488d6d18d6ded14c869bb5408bcb6a4, type: 3}
-    - m_Text: Bundesliga
-      m_Image: {fileID: 21300000, guid: c0b412f61a96038469d5661cd5a7ab2d, type: 3}
-    - m_Text: Ligue Une
-      m_Image: {fileID: 21300000, guid: efc0a31c35e34274ab92c8b780f31790, type: 3}
-    - m_Text: Liga Portugal
-      m_Image: {fileID: 21300000, guid: 414c73b6ee3b6f249983f48afef55837, type: 3}
-    - m_Text: Belgian Pro Lg.
-      m_Image: {fileID: 21300000, guid: 72176c7255c939542b6704c79110f1fd, type: 3}
-    - m_Text: Lg. of Ireland
-      m_Image: {fileID: 21300000, guid: f4ae1c96a6940e644b7f0cd1c3016b80, type: 3}
+    m_Options: []
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -5539,6 +5521,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   leagueDropdown: {fileID: 1568623270}
+  teamDropdown: {fileID: 1683435963}
 --- !u!1 &1771000075
 GameObject:
   m_ObjectHideFlags: 0
@@ -6463,6 +6446,8 @@ GameObject:
   - component: {fileID: 2001210841}
   - component: {fileID: 2001210840}
   - component: {fileID: 2001210839}
+  - component: {fileID: 2001210843}
+  - component: {fileID: 2001210842}
   m_Layer: 5
   m_Name: Scroll View
   m_TagString: Untagged
@@ -6560,6 +6545,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2001210837}
   m_CullTransparentMesh: 1
+--- !u!114 &2001210842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001210837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c9556d3304eed648836c2ab70a08a29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leagueDropdown: {fileID: 1568623270}
+  teamDropdown: {fileID: 1683435963}
+  teamDropdownScript: {fileID: 1755377541}
+--- !u!114 &2001210843
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2001210837}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c9556d3304eed648836c2ab70a08a29, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  leagueDropdown: {fileID: 0}
+  teamDropdown: {fileID: 0}
+  teamDropdownScript: {fileID: 0}
 --- !u!1 &2102776719
 GameObject:
   m_ObjectHideFlags: 0
