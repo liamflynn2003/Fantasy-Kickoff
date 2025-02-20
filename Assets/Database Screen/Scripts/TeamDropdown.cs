@@ -11,7 +11,7 @@ public class TeamDropdown : MonoBehaviour
     public TMP_Dropdown teamDropdown;
 
     private string apiKey = "3496853baf021377f539dce314b05abe";
-    private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season=2023";
+    private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season={1}";
 
     private Dictionary<string, int> teamIdMap = new Dictionary<string, int>(); // Stores team names and IDs
 
@@ -21,6 +21,7 @@ public class TeamDropdown : MonoBehaviour
         {
             leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
         }
+        OnLeagueChanged();
     }
 
     private void OnLeagueChanged()
@@ -29,9 +30,11 @@ public class TeamDropdown : MonoBehaviour
         Debug.Log("Selected League: " + selectedLeague);
 
         int leagueId = GetLeagueId(selectedLeague);
+        int season = (leagueId == 357) ? 2025 : 2024; // Use 2025 for Lg. of Ireland, otherwise default to 2024
+
         if (leagueId > 0)
         {
-            StartCoroutine(FetchTeams(leagueId));
+            StartCoroutine(FetchTeams(leagueId, season));
         }
     }
 
@@ -40,25 +43,15 @@ public class TeamDropdown : MonoBehaviour
         return leagueDropdown.options[leagueDropdown.value].text;
     }
 
-    private IEnumerator FetchTeams(int leagueId)
+    private IEnumerator FetchTeams(int leagueId, int season)
     {
-        string apiUrl = string.Format(baseUrl, leagueId);
+        string apiUrl = string.Format(baseUrl, leagueId, season);
         UnityWebRequest request = UnityWebRequest.Get(apiUrl);
         request.SetRequestHeader("x-apisports-key", apiKey);
 
         yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
-        {
-            Debug.LogError("API Request Error: " + request.error);
-        }
-        else
-        {
-            Debug.Log("Raw JSON Response: " + request.downloadHandler.text);
-
-            TeamApiResponse response = JsonConvert.DeserializeObject<TeamApiResponse>(request.downloadHandler.text);
-            PopulateTeamDropdown(response);
-        }
+        TeamApiResponse response = JsonConvert.DeserializeObject<TeamApiResponse>(request.downloadHandler.text);
+        PopulateTeamDropdown(response);
     }
 
     private void PopulateTeamDropdown(TeamApiResponse response)
@@ -86,27 +79,11 @@ public class TeamDropdown : MonoBehaviour
     {
         UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
         yield return request.SendWebRequest();
+        Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+        Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
 
-        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
-        {
-            Debug.LogError("Error loading image: " + request.error);
-        }
-        else
-        {
-            Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-            Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-
-            option.image = logoSprite;
-            teamDropdown.RefreshShownValue();
-            ForceDropdownRefresh();
-        }
-    }
-
-    private void ForceDropdownRefresh()
-    {
-        int tempValue = teamDropdown.value;
-        teamDropdown.value = (tempValue == 0) ? 1 : 0;
-        teamDropdown.value = tempValue;
+        option.image = logoSprite;
+        teamDropdown.RefreshShownValue();
     }
 
     public int GetSelectedTeamId()
@@ -128,7 +105,7 @@ public class TeamDropdown : MonoBehaviour
             case "Liga Portugal": return 94;
             case "Belgian Pro Lg.": return 144;
             case "Lg. of Ireland": return 357;
-            default: return -1;
+            default: return 39; // Default to Premier League
         }
     }
 }
