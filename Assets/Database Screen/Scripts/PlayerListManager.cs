@@ -18,14 +18,21 @@ public class PlayerListManager : MonoBehaviour
     private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
     private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
 
-   private void Start()
+private void Start()
 {
     if (teamDropdown != null)
     {
-        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
-
-        teamDropdown.onValueChanged.AddListener(delegate { SetInitialTeamDropdownValue(); });
+        // Set the initial team dropdown value
+        SetInitialTeamDropdownValue();
+        StartCoroutine(WaitForTwoSecondsAndSelect());
     }
+}
+
+private IEnumerator WaitForTwoSecondsAndSelect()
+{
+    // Wait for 2 seconds
+    yield return new WaitForSeconds(2f);
+    OnTeamSelected();
 }
 
 private void SetInitialTeamDropdownValue()
@@ -33,10 +40,12 @@ private void SetInitialTeamDropdownValue()
     if (teamDropdown.options.Count > 1)
     {
         teamDropdown.value = 1;
-        OnTeamSelected();
+    }
+    else
+    {
+        Debug.Log("Dropdown does not have enough options.");
     }
 }
-
 
     private void OnTeamSelected()
     {
