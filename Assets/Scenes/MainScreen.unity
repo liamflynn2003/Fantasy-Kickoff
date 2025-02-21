@@ -1505,7 +1505,7 @@ GameObject:
   - component: {fileID: 659818842}
   - component: {fileID: 659818841}
   m_Layer: 5
-  m_Name: Button2
+  m_Name: Single Player
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2093,7 +2093,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: edcd7477a38678b4ebd0f79117e12ee5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 462a6960586d5944a8821713c793eb5c, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2918,8 +2918,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -51.4}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 1, y: -51.4}
+  m_SizeDelta: {x: 162.6632, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1178115213
 MonoBehaviour:
@@ -2941,7 +2941,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player Database
+  m_text: Single Player Sim
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
   m_sharedMaterial: {fileID: -6489315694153902105, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
@@ -3487,7 +3487,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player Database
+  m_text: Leagues
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
   m_sharedMaterial: {fileID: -6489315694153902105, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
@@ -3713,7 +3713,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: edcd7477a38678b4ebd0f79117e12ee5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 904bda152368ef5439c862aec9df4121, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -5139,7 +5139,7 @@ RectTransform:
   m_GameObject: {fileID: 1771000075}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7064277, y: 0.89077675, z: 0.85858}
+  m_LocalScale: {x: 1.5555966, y: 0.812041, z: 0.7826901}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1715356968}
@@ -5170,7 +5170,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player Database
+  m_text: Multiplayer Quickmatch
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
   m_sharedMaterial: {fileID: -6489315694153902105, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
@@ -6009,7 +6009,7 @@ RectTransform:
   m_GameObject: {fileID: 1913204541}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 2.4125, y: 1, z: 1}
+  m_LocalScale: {x: 2.532944, y: 1.0499251, z: 1.0499251}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1448886870}
@@ -6017,7 +6017,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 21}
+  m_AnchoredPosition: {x: 0, y: 18.4}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1913204543
@@ -6040,7 +6040,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: edcd7477a38678b4ebd0f79117e12ee5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 67e9e4bb4fa37ef42b7d970f8dec98cc, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
