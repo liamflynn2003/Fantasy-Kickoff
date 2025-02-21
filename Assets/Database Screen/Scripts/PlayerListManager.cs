@@ -5,6 +5,7 @@ using UnityEngine.Networking;
 using UnityEngine.UI;
 using TMPro;
 using Newtonsoft.Json;
+using System;
 
 public class PlayerListManager : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class PlayerListManager : MonoBehaviour
     public GameObject playerListPrefab;
     public GameObject loadingPanel;
 
-    private string apiKey = "3496853baf021377f539dce314b05abe";
+    private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
     private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
     private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
 
@@ -22,6 +23,9 @@ private void Start()
 {
     if (teamDropdown != null)
     {
+        // Subscribe to the dropdown change event
+        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+
         // Set the initial team dropdown value
         SetInitialTeamDropdownValue();
         StartCoroutine(WaitForTwoSecondsAndSelect());

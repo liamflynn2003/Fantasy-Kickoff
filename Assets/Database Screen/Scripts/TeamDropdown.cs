@@ -4,13 +4,14 @@ using UnityEngine;
 using UnityEngine.Networking;
 using TMPro;
 using Newtonsoft.Json;
+using System;
 
 public class TeamDropdown : MonoBehaviour
 {
     public TMP_Dropdown leagueDropdown;
     public TMP_Dropdown teamDropdown;
 
-    private string apiKey = "3496853baf021377f539dce314b05abe";
+    private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
     private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season={1}";
 
     private Dictionary<string, int> teamIdMap = new Dictionary<string, int>(); // Stores team names and IDs
