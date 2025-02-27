@@ -10,6 +10,7 @@ using System;
 public class PlayerListManager : MonoBehaviour
 {
     public TMP_Dropdown teamDropdown;
+    public TMP_Dropdown leagueDropdown;
     public Transform contentPanel;
     public Transform contentParent;
     public GameObject playerListPrefab;
@@ -19,28 +20,122 @@ public class PlayerListManager : MonoBehaviour
     private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
     private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
 
-private void Start()
-{
+    public class PlayerApiResponse
+    {
+    public List<PlayerData> response;
+    public PagingInfo paging;
+    }
+
+    // JSON Classes - Store the direct JSON Info
+   public class PlayerData
+    {
+        public PlayerJsonObject player;
+        public List<PlayerStatistics> statistics;
+        public Skill skill;
+
+        public void CalculateSkills()
+        {
+            if (statistics == null || statistics.Count == 0) return;
+            var stats = statistics[0];
+
+            skill = new Skill
+            {
+                passing = Mathf.Clamp((stats.passes.total ?? 0) + (stats.passes.key ?? 0) * 2, 0, 100),
+                shooting = Mathf.Clamp((stats.goals.total ?? 0) * 10 + (stats.shots.on ?? 0) * 2, 0, 100),
+                tackling = Mathf.Clamp((stats.tackles.total ?? 0) * 2 + (stats.duels.won ?? 0), 0, 100),
+                saving = Mathf.Clamp((stats.goals.saves ?? 0) * 10, 0, 100),
+                agility = Mathf.Clamp((stats.dribbles.success ?? 0) * 2 + (stats.fouls.drawn ?? 0), 0, 100),
+                strength = Mathf.Clamp((stats.duels.total ?? 0) + (stats.fouls.committed ?? 0), 0, 100),
+                penaltyTaking = Mathf.Clamp((stats.penalty.scored ?? 0) * 10 - (stats.penalty.missed ?? 0) * 5, 0, 100),
+                jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
+            };
+        }
+    }
+
+    public class PlayerJsonObject
+    {
+        public int id;
+        public string firstname;
+        public string lastname;
+        public string photo;
+        public string height;
+        public string weight;
+    }
+
+    public class Skill
+    {
+        public int passing;
+        public int shooting;
+        public int tackling;
+        public int saving;
+        public int agility;
+        public int strength;
+        public int penaltyTaking;
+        public int jumping;
+    }
+
+    public class PlayerStatistics
+    {
+        public GameStatistics games;
+        public PassStatistics passes;
+        public ShotStatistics shots;
+        public GoalStatistics goals;
+        public TackleStatistics tackles;
+        public DuelStatistics duels;
+        public DribbleStatistics dribbles;
+        public FoulStatistics fouls;
+        public PenaltyStatistics penalty;
+    }
+
+    public class GameStatistics { public int? appearences; }
+    public class PassStatistics { public int? total; public int? key; }
+    public class ShotStatistics { public int? total; public int? on; }
+    public class GoalStatistics { public int? total; public int? saves; }
+    public class TackleStatistics { public int? total; }
+    public class DuelStatistics { public int? total; public int? won; }
+    public class DribbleStatistics { public int? success; }
+    public class FoulStatistics { public int? drawn; public int? committed; }
+    public class PenaltyStatistics { public int? scored; public int? missed; }
+
+    // Game Object that Translates JSON version of Player to a Game Object to be used in the game
+    public class Player : MonoBehaviour
+    {
+    public string playerName; 
+    public string position; 
+    public int rating;
+    public Skill skill;
+    public Vector2 currentPOS;
+    }
+
+    public class PagingInfo
+    {
+    public int current;
+    public int total;
+    }
+
+    private void Start()
+    {
     if (teamDropdown != null)
     {
-        // Subscribe to the dropdown change event
-        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+        // Subscribe to the dropdown changes
+        leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged();});
 
-        // Set the initial team dropdown value
+        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+        // Set the initial team value, because api does not load on frame 1
         SetInitialTeamDropdownValue();
         StartCoroutine(WaitForTwoSecondsAndSelect());
     }
-}
+    }
 
-private IEnumerator WaitForTwoSecondsAndSelect()
-{
+    private IEnumerator WaitForTwoSecondsAndSelect()
+    {
     // Wait for 2 seconds
     yield return new WaitForSeconds(2f);
     OnTeamSelected();
-}
+    }
 
-private void SetInitialTeamDropdownValue()
-{
+    private void SetInitialTeamDropdownValue()
+    {
     if (teamDropdown.options.Count > 1)
     {
         teamDropdown.value = 1;
@@ -49,8 +144,14 @@ private void SetInitialTeamDropdownValue()
     {
         Debug.Log("Dropdown does not have enough options.");
     }
-}
+    }
 
+    private void OnLeagueChanged()
+    {
+    // When the league changes, reset to the default team (index 1)
+    SetInitialTeamDropdownValue();
+    OnTeamSelected(); // Update player list
+    }
     private void OnTeamSelected()
     {
         int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
@@ -69,7 +170,7 @@ private void SetInitialTeamDropdownValue()
     }
 
     private IEnumerator FetchAllPlayers(int teamId)
-{
+    {
     // Show the loading UI
     loadingPanel.SetActive(true);
 
@@ -117,7 +218,7 @@ private void SetInitialTeamDropdownValue()
             }
             else
             {
-                break; // No need for debug logs here
+                break; // Add Debug logs if needed, fine for now
             }
         }
     }
@@ -132,8 +233,7 @@ private void SetInitialTeamDropdownValue()
 
     // Hide the loading UI once the data is loaded
     loadingPanel.SetActive(false);
-}
-
+    }
 
     public void PopulateScrollView(List<PlayerData> players)
     {
@@ -148,15 +248,17 @@ private void SetInitialTeamDropdownValue()
 
         foreach (var playerData in players)
         {
+            // Craft player name using first name and last name from JSON
             string firstName = playerData.player.firstname.Split(' ')[0];
             string lastName = playerData.player.lastname.Split(' ')[0];
             string fullPlayerName = $"{firstName} {lastName}";
 
+            // Create a new list item with the player's name and image
             GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
             TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
             nameText.text = fullPlayerName;
-
             Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
+
             if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
             {
                 StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
@@ -242,60 +344,3 @@ public class PlayerImageCache
         return _imageCache.ContainsKey(url) ? _imageCache[url] : null;
     }
 }
-
-
-[System.Serializable]
-public class PlayerApiResponse
-{
-    public List<PlayerData> response;
-    public PagingInfo paging;
-}
-
-[System.Serializable]
-public class PlayerData
-{
-    public PlayerInfo player;
-    public List<PlayerStatistics> statistics;
-}
-
-[System.Serializable]
-public class PlayerInfo
-{
-    public int id;
-    public string name;
-    public string firstname;
-    public string lastname;
-    public int age;
-    public BirthInfo birth;
-    public string height;
-    public bool injured;
-    public string photo;
-}
-
-[System.Serializable]
-public class BirthInfo
-{
-    public string date;
-    public string place;
-    public string country;
-}
-
-[System.Serializable]
-public class PagingInfo
-{
-    public int current;
-    public int total;
-}
-
-[System.Serializable]
-public class PlayerStatistics
-{
-    public GameStatistics games;
-}
-
-[System.Serializable]
-public class GameStatistics
-{
-    public int? appearences;
-}
-

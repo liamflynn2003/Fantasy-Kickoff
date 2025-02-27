@@ -1955,6 +1955,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   teamDropdown: {fileID: 1683435963}
+  leagueDropdown: {fileID: 1568623270}
   contentPanel: {fileID: 2530622260324694079, guid: 5e3e6a2fa4d0b5743a6366416bf5967f, type: 3}
   contentParent: {fileID: 1416918185}
   playerListPrefab: {fileID: 2530622260324694048, guid: 5e3e6a2fa4d0b5743a6366416bf5967f, type: 3}
