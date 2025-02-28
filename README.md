@@ -1,4 +1,4 @@
-# Football Player Management Unity Game
+# FANTASY KICKOFF - Football Player Management Unity Mobile Game
 
 This project is a Unity-based mobile game that allows users to view football player data, retrieve player statistics from an API, and display player information using a scroll view. It caches data locally so that the app can persist player information after closing, improving performance and reducing the need for frequent API calls.
 
