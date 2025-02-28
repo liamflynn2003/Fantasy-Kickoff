@@ -18,3 +18,7 @@ https://v3.football.api-sports.io/players?team={teamId}&season=2024&page={page}
 ```
 
 You can find the full documentation on the [API Football Documentation](https://www.api-football.com/).
+
+## Simulation Engine
+
+The football match simulation engine is hosted on a Node.js server running on AWS. Unity sends the selected teams' information to the server, which processes the match and returns the simulation results. These results are then displayed to the player as a match, including statistics and player performances.
