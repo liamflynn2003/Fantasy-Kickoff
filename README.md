@@ -32,3 +32,7 @@ You can find the full documentation on the [API Football Documentation](https://
 ## Simulation Engine
 
 The football match simulation engine is hosted on a Node.js server running on AWS. Unity sends the selected teams' information to the server, which processes the match and returns the simulation results. These results are then displayed to the player as a match, including statistics and player performances.
+
+The engine can be found in the project repo here: https://github.com/liamflynn2003/Fantasy-Kickoff/tree/main/Simulation%20Engines/footballSimulationEngine-master
+
+This engine is gratefully adapted from Aiden Gallagher's public and free-to-use work on the Football Simulation Engine, which can be found here: https://github.com/GallagherAiden/footballSimulationEngine
