@@ -20,6 +20,8 @@ public class PlayerListManager : MonoBehaviour
     private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
     private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
 
+    private LocalDataManager localDataManager;
+
     public class PlayerApiResponse
     {
     public List<PlayerData> response;
@@ -115,17 +117,18 @@ public class PlayerListManager : MonoBehaviour
 
     private void Start()
     {
-    if (teamDropdown != null)
-    {
-        // Subscribe to the dropdown changes
-        leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged();});
+        localDataManager = GetComponent<LocalDataManager>();
 
-        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
-        // Set the initial team value, because api does not load on frame 1
-        SetInitialTeamDropdownValue();
-        StartCoroutine(WaitForTwoSecondsAndSelect());
+        if (teamDropdown != null)
+        {
+            leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
+            teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+
+            SetInitialTeamDropdownValue();
+            StartCoroutine(WaitForTwoSecondsAndSelect());
+        }
     }
-    }
+
 
     private IEnumerator WaitForTwoSecondsAndSelect()
     {
@@ -154,24 +157,27 @@ public class PlayerListManager : MonoBehaviour
     }
     private void OnTeamSelected()
     {
-        int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
-        if (teamId > 0)
+    int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
+    if (teamId > 0)
+    {
+        // Check if we already have the cached data for the selected team
+        if (playerCache.ContainsKey(teamId))
         {
-            if (playerCache.ContainsKey(teamId))
-            {
-                // Use cached data if available
-                PopulateScrollView(playerCache[teamId]);
-            }
-            else
-            {
-                StartCoroutine(FetchAllPlayers(teamId));
-            }
+            Debug.Log("Using cached data for team ID: " + teamId);
+            PopulateScrollView(playerCache[teamId]); // Display cached data
+        }
+        else
+        {
+            // If no cached data is found, fetch new data from the API
+            Debug.Log("Fetching data from API for team ID: " + teamId);
+            StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
         }
     }
+    }
+
 
     private IEnumerator FetchAllPlayers(int teamId)
-    {
-    // Show the loading UI
+{
     loadingPanel.SetActive(true);
 
     int currentPage = 1;
@@ -181,7 +187,6 @@ public class PlayerListManager : MonoBehaviour
     while (currentPage <= totalPages)
     {
         string apiUrl = string.Format(baseUrl, teamId, currentPage);
-
         UnityWebRequest request = UnityWebRequest.Get(apiUrl);
         request.SetRequestHeader("x-apisports-key", apiKey);
 
@@ -190,7 +195,7 @@ public class PlayerListManager : MonoBehaviour
         if (request.result == UnityWebRequest.Result.ConnectionError || 
             request.result == UnityWebRequest.Result.ProtocolError)
         {
-            yield break; // No debug logs for errors
+            yield break;
         }
         else
         {
@@ -218,22 +223,22 @@ public class PlayerListManager : MonoBehaviour
             }
             else
             {
-                break; // Add Debug logs if needed, fine for now
+                break;
             }
         }
     }
 
     if (allPlayers.Count > 0)
     {
-        // Cache the result
+        // Cache and save to local storage
         playerCache[teamId] = allPlayers;
+        localDataManager.SavePlayerData(allPlayers); // Save to local file
     }
 
     PopulateScrollView(allPlayers);
-
-    // Hide the loading UI once the data is loaded
     loadingPanel.SetActive(false);
-    }
+}
+
 
     public void PopulateScrollView(List<PlayerData> players)
     {
