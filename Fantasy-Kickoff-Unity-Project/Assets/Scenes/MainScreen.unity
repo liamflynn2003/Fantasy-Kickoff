@@ -1915,6 +1915,7 @@ GameObject:
   m_Component:
   - component: {fileID: 769785094}
   - component: {fileID: 769785095}
+  - component: {fileID: 769785096}
   m_Layer: 5
   m_Name: PlayerManager
   m_TagString: Untagged
@@ -1960,6 +1961,18 @@ MonoBehaviour:
   contentParent: {fileID: 1416918185}
   playerListPrefab: {fileID: 2530622260324694048, guid: 5e3e6a2fa4d0b5743a6366416bf5967f, type: 3}
   loadingPanel: {fileID: 208909068}
+--- !u!114 &769785096
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 769785093}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa61ed1cfd708ce4a871b9fed5ad6910, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &857735228
 GameObject:
   m_ObjectHideFlags: 0
@@ -5867,7 +5880,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4732731637887729989, guid: 593305a1fdac6fe4e88e8b132b7e1dea, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 593305a1fdac6fe4e88e8b132b7e1dea, type: 3}
