@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using TMPro;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 
 public class PlayerListManager : MonoBehaviour
 {
@@ -117,7 +118,9 @@ public class PlayerListManager : MonoBehaviour
 
     private void Start()
     {
+        loadingPanel.SetActive(true);
         localDataManager = GetComponent<LocalDataManager>();
+        playerCache = localDataManager.LoadCache();
 
         if (teamDropdown != null)
         {
@@ -127,14 +130,20 @@ public class PlayerListManager : MonoBehaviour
             SetInitialTeamDropdownValue();
             StartCoroutine(WaitForTwoSecondsAndSelect());
         }
+       
     }
 
+    private void OnApplicationQuit()
+    {
+        localDataManager.SaveCache(playerCache);
+    }
 
     private IEnumerator WaitForTwoSecondsAndSelect()
     {
     // Wait for 2 seconds
     yield return new WaitForSeconds(2f);
-    OnTeamSelected();
+        OnTeamSelected();
+        loadingPanel.SetActive(false);
     }
 
     private void SetInitialTeamDropdownValue()

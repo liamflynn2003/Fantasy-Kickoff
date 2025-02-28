@@ -7,13 +7,15 @@ using Newtonsoft.Json;
 public class LocalDataManager : MonoBehaviour
 {
     private string filePath;
+    private string cacheFilePath;
 
     private void Awake()
     {
         filePath = Path.Combine(Application.persistentDataPath, "players.json");
+        cacheFilePath = Path.Combine(Application.persistentDataPath, "playerCache.json");
     }
 
-    // Save Player Data Locally
+    // Save Player Data Locally (for individual player data)
     public void SavePlayerData(List<PlayerListManager.PlayerData> playerData)
     {
         try
@@ -56,5 +58,50 @@ public class LocalDataManager : MonoBehaviour
     public bool HasLocalData()
     {
         return File.Exists(filePath);
+    }
+
+    // Save the player cache to a file (for caching)
+    public void SaveCache(Dictionary<int, List<PlayerListManager.PlayerData>> playerCache)
+    {
+        try
+        {
+            string json = JsonConvert.SerializeObject(playerCache, Formatting.Indented);
+            File.WriteAllText(cacheFilePath, json);
+            Debug.Log("Cache saved.");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to save cache: {e.Message}");
+        }
+    }
+
+    // Load the cache from a file (for caching)
+    public Dictionary<int, List<PlayerListManager.PlayerData>> LoadCache()
+    {
+        if (File.Exists(cacheFilePath))
+        {
+            try
+            {
+                string json = File.ReadAllText(cacheFilePath);
+                var playerCache = JsonConvert.DeserializeObject<Dictionary<int, List<PlayerListManager.PlayerData>>>(json);
+                Debug.Log("Cache loaded.");
+                return playerCache;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"Failed to load cache: {e.Message}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("No cache file found.");
+        }
+        return new Dictionary<int, List<PlayerListManager.PlayerData>>();
+    }
+
+    // Check if Cache Exists
+    public bool HasCache()
+    {
+        return File.Exists(cacheFilePath);
     }
 }
