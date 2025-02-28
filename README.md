@@ -12,6 +12,11 @@ This project is a Unity-based mobile game that allows users to view football pla
 - Handles API pagination for fetching players across multiple pages.
 - Supports dropdown menus for selecting teams and leagues.
 
+## Leagues and Teams
+- Utilizes the current or most recent season from certain supported Leagues.
+![image](https://github.com/user-attachments/assets/6e3f27d3-326c-4288-89b8-07743e7ca926)
+- Supported Leagues: Premier League, EFL Championship, La Liga, Serie A, Bundesliga, Ligue Une, Belgian League, League of Ireland
+
 ## API Integration
 
 The game pulls player data from the API using the endpoint:
