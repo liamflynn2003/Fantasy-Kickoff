@@ -15,8 +15,9 @@ This project is a Unity-based mobile game that allows users to view football pla
 ## Leagues and Teams
 - Utilizes the current or most recent season from certain supported Leagues.
   
-![image](https://github.com/user-attachments/assets/6e3f27d3-326c-4288-89b8-07743e7ca926)
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/6e3f27d3-326c-4288-89b8-07743e7ca926" width="300"/>
+</p>
 - Supported Leagues: Premier League, EFL Championship, La Liga, Serie A, Bundesliga, Ligue Une, Belgian League, League of Ireland
 
 ## API Integration
