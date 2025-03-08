@@ -27,8 +27,7 @@ async function initiateGame(team1, team2, pitchDetails) {
   matchDetails.secondTeam = secondTeam
   return matchDetails
 }
-
-async function playIteration(matchDetails) {
+async function playIteration(matchDetails, playerOverIterations, iterationCount) {
   let closestPlayerA = {
     'name': '',
     'position': 100000
@@ -42,13 +41,62 @@ async function playIteration(matchDetails) {
   validate.validateTeamSecondHalf(matchDetails.secondTeam)
   validate.validatePlayerPositions(matchDetails)
   matchDetails.iterationLog = []
+
   let { kickOffTeam, secondTeam } = matchDetails
+
+  // Capture start positions
+  let startPositions = {
+    ball: Object.assign({}, matchDetails.ball.position),
+    players: {
+      kickOffTeam: kickOffTeam.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        iteration: iterationCount,
+        position: {
+          x: player.currentPOS[0],
+          y: player.currentPOS[1]
+        }
+      })),
+      secondTeam: secondTeam.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        iteration: iterationCount,
+        position: {
+          x: player.currentPOS[0],
+          y: player.currentPOS[1]
+        }
+      }))
+    }
+  }
+
+  // Add player positions to playerOverIterations
+  playerOverIterations.kickOffTeam.forEach((player, index) => {
+    player.positions.push({
+      name: kickOffTeam.players[index].name,
+      iteration: iterationCount,
+      position: {
+        x: kickOffTeam.players[index].currentPOS[0],
+        y: kickOffTeam.players[index].currentPOS[1]
+      }
+    })
+  })
+  playerOverIterations.secondTeam.forEach((player, index) => {
+    player.positions.push({
+      name: secondTeam.players[index].name,
+      iteration: iterationCount,
+      position: {
+        x: secondTeam.players[index].currentPOS[0],
+        y: secondTeam.players[index].currentPOS[1]
+      }
+    })
+  })
+
   common.matchInjury(matchDetails, kickOffTeam)
   common.matchInjury(matchDetails, secondTeam)
   matchDetails = ballMovement.moveBall(matchDetails)
-  if (matchDetails.endIteration == true) {
+  if (matchDetails.endIteration === true) {
     delete matchDetails.endIteration
-    return matchDetails
+    return { matchDetails, startPositions, endPositions: startPositions } // No movement occurred
   }
   playerMovement.closestPlayerToBall(closestPlayerA, kickOffTeam, matchDetails)
   playerMovement.closestPlayerToBall(closestPlayerB, secondTeam, matchDetails)
@@ -56,10 +104,32 @@ async function playIteration(matchDetails) {
   secondTeam = playerMovement.decideMovement(closestPlayerB, secondTeam, kickOffTeam, matchDetails)
   matchDetails.kickOffTeam = kickOffTeam
   matchDetails.secondTeam = secondTeam
-  if (matchDetails.ball.ballOverIterations.length == 0 || matchDetails.ball.withTeam != '') {
+  if (matchDetails.ball.ballOverIterations.length === 0 || matchDetails.ball.withTeam !== '') {
     playerMovement.checkOffside(kickOffTeam, secondTeam, matchDetails)
   }
-  return matchDetails
+
+  // Capture end positions
+  let endPositions = {
+    ball: Object.assign({}, matchDetails.ball.position),
+    players: {
+      kickOffTeam: kickOffTeam.players.map(player =>
+        ({
+          id: player.id,
+          name: player.name,
+          iteration: iterationCount,
+          position: { x: player.currentPOS[0], y: player.currentPOS[1] }
+        })),
+      secondTeam: secondTeam.players.map(player =>
+        ({
+          id: player.id,
+          name: player.name,
+          iteration: iterationCount,
+          position: { x: player.currentPOS[0], y: player.currentPOS[1] }
+        }))
+    }
+  }
+
+  return { matchDetails, startPositions, endPositions }
 }
 
 async function startSecondHalf(matchDetails) {

@@ -18,34 +18,29 @@ app.post('/simulate', async (req, res) => {
     let iterationCount = 0;
     let maxIterations = 50;
 
+    // Initialize playerOverIterations
+    let playerOverIterations = {
+      kickOffTeam: team1.players.map(player => ({ id: player.id, name: player.name, positions: [] })),
+      secondTeam: team2.players.map(player => ({ id: player.id, name: player.name, positions: [] }))
+    };
+
     // Store all the player positions for each iteration
     let allIterations = [];
 
     // Simulate the match
     while (iterationCount < maxIterations && !matchDetails.endIteration) {
-      // Log player positions for this iteration
-      let playerPositions = matchDetails.kickOffTeam.players.map(player => ({
-        name: player.name,
-        position: player.currentPOS,
-        team: matchDetails.kickOffTeam.name,
-      }));
-
-      playerPositions = playerPositions.concat(
-        matchDetails.secondTeam.players.map(player => ({
-          name: player.name,
-          position: player.currentPOS,
-          team: matchDetails.secondTeam.name,
-        }))
-      );
+      // Play an iteration and get start and end positions
+      let iterationResult = await engine.playIteration(matchDetails, playerOverIterations, iterationCount + 1);
+      matchDetails = iterationResult.matchDetails;
 
       // Add the iteration data
       allIterations.push({
         iteration: iterationCount + 1,
-        playerPositions,
+        startPositions: iterationResult.startPositions,
+        endPositions: iterationResult.endPositions,
         iterationLog: matchDetails.iterationLog,
       });
 
-      matchDetails = await engine.playIteration(matchDetails);
       iterationCount++;
 
       // Log every iteration
@@ -53,7 +48,7 @@ app.post('/simulate', async (req, res) => {
       console.log(matchDetails.iterationLog);
 
       // Check if halftime
-      if (matchDetails.half === 1) {
+      if (matchDetails.half === 1 && iterationCount < maxIterations) {
         matchDetails = await engine.startSecondHalf(matchDetails);
       }
     }
@@ -68,7 +63,7 @@ app.post('/simulate', async (req, res) => {
     res.json({
       matchDetails: matchDetails,
       totalIterations: iterationCount,
-      allIterations: allIterations, // Return all the iteration logs and player positions
+      playerOverIterations: playerOverIterations, // Include player positions over iterations
       score: score, // Include the final score
     });
   } catch (error) {
@@ -77,6 +72,6 @@ app.post('/simulate', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${port}`);
 });
