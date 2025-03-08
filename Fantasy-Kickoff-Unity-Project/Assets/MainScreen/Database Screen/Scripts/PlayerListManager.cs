@@ -204,6 +204,8 @@ public class PlayerListManager : MonoBehaviour
         if (request.result == UnityWebRequest.Result.ConnectionError || 
             request.result == UnityWebRequest.Result.ProtocolError)
         {
+            Debug.LogError("Error fetching player data: " + request.error);
+            loadingPanel.SetActive(false);
             yield break;
         }
         else
@@ -232,6 +234,7 @@ public class PlayerListManager : MonoBehaviour
             }
             else
             {
+                Debug.LogError("Invalid response received from API.");
                 break;
             }
         }
@@ -249,78 +252,78 @@ public class PlayerListManager : MonoBehaviour
 }
 
 
-    public void PopulateScrollView(List<PlayerData> players)
+public void PopulateScrollView(List<PlayerData> players)
+{
+    foreach (Transform child in contentParent)
     {
-        foreach (Transform child in contentParent)
-        {
-            Destroy(child.gameObject);
-        }
-
-        float yOffset = -10f;
-        float itemHeight = 20f;
-        float spacing = 0f;
-
-        foreach (var playerData in players)
-        {
-            // Craft player name using first name and last name from JSON
-            string firstName = playerData.player.firstname.Split(' ')[0];
-            string lastName = playerData.player.lastname.Split(' ')[0];
-            string fullPlayerName = $"{firstName} {lastName}";
-
-            // Create a new list item with the player's name and image
-            GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
-            TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
-            nameText.text = fullPlayerName;
-            Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
-
-            if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
-            {
-                StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
-            }
-
-            RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
-            rectTransform.anchoredPosition = new Vector2(93, yOffset);
-
-            yOffset -= (itemHeight + spacing);
-        }
-
-        RectTransform contentRect = contentParent.GetComponent<RectTransform>();
-        contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
-        contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
+        Destroy(child.gameObject);
     }
+
+    float yOffset = -10f;
+    float itemHeight = 20f;
+    float spacing = 0f;
+
+    foreach (var playerData in players)
+    {
+        if (playerData?.player == null) continue;
+
+        // Craft player name using first name and last name from JSON
+        string firstName = playerData.player.firstname.Split(' ')[0];
+        string lastName = playerData.player.lastname.Split(' ')[0];
+        string fullPlayerName = $"{firstName} {lastName}";
+
+        // Create a new list item with the player's name and image
+        GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
+        TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
+        nameText.text = fullPlayerName;
+        Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
+
+        if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
+        {
+            StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
+        }
+
+        RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = new Vector2(93, yOffset);
+
+        yOffset -= (itemHeight + spacing);
+    }
+
+    RectTransform contentRect = contentParent.GetComponent<RectTransform>();
+    contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
+    contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
+}
 
     private IEnumerator LoadPlayerImage(string url, Image playerImage)
+{
+    Sprite cachedSprite = PlayerImageCache.Instance.GetImage(url);
+    if (cachedSprite != null)
     {
-        // Check if the image is already cached
-        if (PlayerImageCache.Instance.HasImage(url))
-        {
-            playerImage.sprite = PlayerImageCache.Instance.GetImage(url);
-            yield break;
-        }
-
-        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-            playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-            PlayerImageCache.Instance.CacheImage(url, playerImage.sprite); // Cache the image for future use
-        }
-        else
-        {
-            // Fallback image logic
-            string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
-            UnityWebRequest placeholderRequest = UnityWebRequestTexture.GetTexture(placeholderUrl);
-            yield return placeholderRequest.SendWebRequest();
-
-            if (placeholderRequest.result == UnityWebRequest.Result.Success)
-            {
-                Texture2D placeholderTexture = ((DownloadHandlerTexture)placeholderRequest.downloadHandler).texture;
-                playerImage.sprite = Sprite.Create(placeholderTexture, new Rect(0, 0, placeholderTexture.width, placeholderTexture.height), new Vector2(0.5f, 0.5f));
-            }
-        }
+        playerImage.sprite = cachedSprite;
+        yield break;
     }
+
+    yield return LoadImageFromUrl(url, playerImage);
+
+    if (playerImage.sprite == null)
+    {
+        string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
+        yield return LoadImageFromUrl(placeholderUrl, playerImage);
+    }
+}
+
+private IEnumerator LoadImageFromUrl(string url, Image playerImage)
+{
+    UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+    yield return request.SendWebRequest();
+
+    if (request.result == UnityWebRequest.Result.Success)
+    {
+        Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+        playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        PlayerImageCache.Instance.CacheImage(url, playerImage.sprite);
+    }
+}
 }
 
 public class PlayerImageCache
