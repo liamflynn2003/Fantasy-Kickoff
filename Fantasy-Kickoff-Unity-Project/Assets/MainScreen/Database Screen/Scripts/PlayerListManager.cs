@@ -33,13 +33,12 @@ public class PlayerListManager : MonoBehaviour
    public class PlayerData
     {
         public PlayerJsonObject player;
-        public List<PlayerStatistics> statistics;
         public Skill skill;
 
-        public void CalculateSkills()
+        public void CalculateSkillsFromJson(string json)
         {
-            if (statistics == null || statistics.Count == 0) return;
-            var stats = statistics[0];
+            PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
+            player = playerData;
 
             skill = new Skill
             {
