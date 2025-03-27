@@ -32,26 +32,37 @@ public class PlayerListManager : MonoBehaviour
     // JSON Classes - Store the direct JSON Info
    public class PlayerData
     {
-        public PlayerJsonObject player;
-        public Skill skill;
+    public PlayerJsonObject player;
+    public Skill skill;
+    public List<PlayerStatistics> statistics;
 
-        public void CalculateSkillsFromJson(string json)
+    public void CalculateSkillsFromJson(string json)
+    {
+    PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
+    player = playerData;
+
+    // Ensure statistics is not null and has at least one element
+    var stats = statistics != null && statistics.Count > 0 ? statistics[0] : null;
+
+    if (stats != null)
+    {
+        skill = new Skill
         {
-            PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
-            player = playerData;
-
-            skill = new Skill
-            {
-                passing = Mathf.Clamp((stats.passes.total ?? 0) + (stats.passes.key ?? 0) * 2, 0, 100),
-                shooting = Mathf.Clamp((stats.goals.total ?? 0) * 10 + (stats.shots.on ?? 0) * 2, 0, 100),
-                tackling = Mathf.Clamp((stats.tackles.total ?? 0) * 2 + (stats.duels.won ?? 0), 0, 100),
-                saving = Mathf.Clamp((stats.goals.saves ?? 0) * 10, 0, 100),
-                agility = Mathf.Clamp((stats.dribbles.success ?? 0) * 2 + (stats.fouls.drawn ?? 0), 0, 100),
-                strength = Mathf.Clamp((stats.duels.total ?? 0) + (stats.fouls.committed ?? 0), 0, 100),
-                penaltyTaking = Mathf.Clamp((stats.penalty.scored ?? 0) * 10 - (stats.penalty.missed ?? 0) * 5, 0, 100),
-                jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
-            };
-        }
+            passing = Mathf.Clamp((stats.passes.total ?? 0) + (stats.passes.key ?? 0) * 2, 0, 100),
+            shooting = Mathf.Clamp((stats.goals.total ?? 0) * 10 + (stats.shots.on ?? 0) * 2, 0, 100),
+            tackling = Mathf.Clamp((stats.tackles.total ?? 0) * 2 + (stats.duels.won ?? 0), 0, 100),
+            saving = Mathf.Clamp((stats.goals.saves ?? 0) * 10, 0, 100),
+            agility = Mathf.Clamp((stats.dribbles.success ?? 0) * 2 + (stats.fouls.drawn ?? 0), 0, 100),
+            strength = Mathf.Clamp((stats.duels.total ?? 0) + (stats.fouls.committed ?? 0), 0, 100),
+            penaltyTaking = Mathf.Clamp((stats.penalty.scored ?? 0) * 10 - (stats.penalty.missed ?? 0) * 5, 0, 100),
+            jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
+        };
+    }
+    else
+    {
+        Debug.LogWarning("No statistics available for this player.");
+    }
+    }
     }
 
     public class PlayerJsonObject
@@ -115,22 +126,21 @@ public class PlayerListManager : MonoBehaviour
     public int total;
     }
 
-    private void Start()
+private void Start()
+{
+    localDataManager = GetComponent<LocalDataManager>();
+    playerCache = localDataManager.LoadCache();
+
+    if (teamDropdown != null)
     {
-        loadingPanel.SetActive(true);
-        localDataManager = GetComponent<LocalDataManager>();
-        playerCache = localDataManager.LoadCache();
+        leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
+        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
 
-        if (teamDropdown != null)
-        {
-            leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
-            teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
-
-            SetInitialTeamDropdownValue();
-            StartCoroutine(WaitForTwoSecondsAndSelect());
-        }
-       
+        SetInitialTeamDropdownValue();
     }
+
+    OnLeagueChanged(); // Trigger initial league change
+}
 
     private void OnApplicationQuit()
     {
@@ -145,30 +155,29 @@ public class PlayerListManager : MonoBehaviour
         loadingPanel.SetActive(false);
     }
 
-    private void SetInitialTeamDropdownValue()
+private void SetInitialTeamDropdownValue()
+{
+    if (teamDropdown.options.Count > 0)
     {
-    if (teamDropdown.options.Count > 1)
-    {
-        teamDropdown.value = 1;
+        Debug.Log("Setting team dropdown to default index (0).");
+        teamDropdown.value = 0; // Set to the first option
     }
     else
     {
-        Debug.Log("Dropdown does not have enough options.");
+        Debug.LogWarning("Dropdown does not have enough options.");
     }
-    }
+}
 
-    private void OnLeagueChanged()
-    {
-    // When the league changes, reset to the default team (index 1)
-    SetInitialTeamDropdownValue();
-    OnTeamSelected(); // Update player list
-    }
-    private void OnTeamSelected()
-    {
+private void OnLeagueChanged()
+{
+    Debug.Log("League dropdown changed. Current league index: " + leagueDropdown.value);
+}
+
+    public void OnTeamSelected()
+{
     int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
     if (teamId > 0)
     {
-        // Check if we already have the cached data for the selected team
         if (playerCache.ContainsKey(teamId))
         {
             Debug.Log("Using cached data for team ID: " + teamId);
@@ -181,7 +190,7 @@ public class PlayerListManager : MonoBehaviour
             StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
         }
     }
-    }
+}
 
 
     private IEnumerator FetchAllPlayers(int teamId)
@@ -234,6 +243,7 @@ public class PlayerListManager : MonoBehaviour
             else
             {
                 Debug.LogError("Invalid response received from API.");
+                loadingPanel.SetActive(false);
                 break;
             }
         }

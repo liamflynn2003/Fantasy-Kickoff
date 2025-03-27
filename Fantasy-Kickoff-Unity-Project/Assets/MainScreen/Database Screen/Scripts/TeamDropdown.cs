@@ -25,56 +25,94 @@ public class TeamDropdown : MonoBehaviour
         OnLeagueChanged();
     }
 
-    private void OnLeagueChanged()
+private void OnLeagueChanged()
+{
+    string selectedLeague = leagueDropdown.options[leagueDropdown.value].text;
+    Debug.Log("Selected League: " + selectedLeague);
+
+    int leagueId = GetLeagueId(selectedLeague);
+    int season = (leagueId == 357) ? 2025 : 2024; // Use 2025 for Lg. of Ireland, otherwise default to 2024
+
+    if (leagueId > 0)
     {
-        string selectedLeague = leagueDropdown.options[leagueDropdown.value].text;
-        Debug.Log("Selected League: " + selectedLeague);
-
-        int leagueId = GetLeagueId(selectedLeague);
-        int season = (leagueId == 357) ? 2025 : 2024; // Use 2025 for Lg. of Ireland, otherwise default to 2024
-
-        if (leagueId > 0)
-        {
-            StartCoroutine(FetchTeams(leagueId, season));
-        }
+        StartCoroutine(FetchTeamsAndNotify(leagueId, season));
     }
+}
+
+private IEnumerator FetchTeamsAndNotify(int leagueId, int season)
+{
+    yield return FetchTeams(leagueId, season); // Wait for teams to be fetched
+
+    // Ensure the team dropdown is fully updated before notifying PlayerListManager
+    if (teamDropdown.options.Count > 0)
+    {
+        teamDropdown.value = 0; // Set to the first option
+        teamDropdown.captionText.text = teamDropdown.options[0].text; // Update the caption
+    }
+
+    // Notify PlayerListManager after the dropdown is fully updated
+    FindObjectOfType<PlayerListManager>().OnTeamSelected();
+}
 
     public string GetSelectedLeague()
     {
         return leagueDropdown.options[leagueDropdown.value].text;
     }
 
-    private IEnumerator FetchTeams(int leagueId, int season)
-    {
-        string apiUrl = string.Format(baseUrl, leagueId, season);
-        UnityWebRequest request = UnityWebRequest.Get(apiUrl);
-        request.SetRequestHeader("x-apisports-key", apiKey);
+private IEnumerator FetchTeams(int leagueId, int season)
+{
+    string apiUrl = string.Format(baseUrl, leagueId, season);
+    UnityWebRequest request = UnityWebRequest.Get(apiUrl);
+    request.SetRequestHeader("x-apisports-key", apiKey);
 
-        yield return request.SendWebRequest();
-        TeamApiResponse response = JsonConvert.DeserializeObject<TeamApiResponse>(request.downloadHandler.text);
-        PopulateTeamDropdown(response);
+    yield return request.SendWebRequest();
+
+    if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+    {
+        Debug.LogError("Error fetching teams: " + request.error);
+        yield break;
     }
 
-    private void PopulateTeamDropdown(TeamApiResponse response)
+    TeamApiResponse response = JsonConvert.DeserializeObject<TeamApiResponse>(request.downloadHandler.text);
+
+    if (response == null || response.response == null || response.response.Length == 0)
     {
-        teamDropdown.ClearOptions();
-        teamIdMap.Clear(); // Clear previous team IDs
-
-        List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
-
-        foreach (var teamData in response.response)
-        {
-            TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(teamData.team.name);
-            options.Add(option);
-            teamIdMap[teamData.team.name] = teamData.team.id; // Store team ID
-
-            StartCoroutine(LoadLogo(teamData.team.logo, option));
-        }
-
-        teamDropdown.AddOptions(options);
-        teamDropdown.value = 0;
-        teamDropdown.captionText.text = "Select a Team";
+        Debug.LogWarning("No teams found for league ID: " + leagueId);
+        yield break;
     }
+
+    PopulateTeamDropdown(response);
+}
+
+private void PopulateTeamDropdown(TeamApiResponse response)
+{
+    teamDropdown.onValueChanged.RemoveAllListeners(); // Temporarily disable listeners
+    teamDropdown.ClearOptions();
+    teamIdMap.Clear(); // Clear previous team IDs
+
+    List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
+
+    foreach (var teamData in response.response)
+    {
+        TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(teamData.team.name);
+        options.Add(option);
+        teamIdMap[teamData.team.name] = teamData.team.id; // Store team ID
+    }
+
+    teamDropdown.AddOptions(options);
+
+    if (options.Count > 0)
+    {
+        Debug.Log("Team dropdown populated with " + options.Count + " teams.");
+    }
+    else
+    {
+        Debug.LogWarning("No valid options to set in the team dropdown.");
+    }
+
+    // Re-enable listeners after setting the default value
+    teamDropdown.onValueChanged.AddListener(delegate { FindObjectOfType<PlayerListManager>().OnTeamSelected(); });
+}
 
     private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
     {
@@ -88,10 +126,16 @@ public class TeamDropdown : MonoBehaviour
     }
 
     public int GetSelectedTeamId()
+{
+    if (teamDropdown.options.Count == 0)
     {
-        string selectedTeam = teamDropdown.options[teamDropdown.value].text;
-        return teamIdMap.ContainsKey(selectedTeam) ? teamIdMap[selectedTeam] : -1;
+        Debug.LogError("Team dropdown is empty. Cannot get selected team ID.");
+        return 0;
     }
+
+    string selectedTeam = teamDropdown.options[teamDropdown.value].text;
+    return teamIdMap.ContainsKey(selectedTeam) ? teamIdMap[selectedTeam] : 0;
+}
 
     private int GetLeagueId(string leagueName)
     {
@@ -106,7 +150,7 @@ public class TeamDropdown : MonoBehaviour
             case "Liga Portugal": return 94;
             case "Belgian Pro Lg.": return 144;
             case "Lg. of Ireland": return 357;
-            default: return 39; // Default to Premier League
+            default: return 39;
         }
     }
 }
