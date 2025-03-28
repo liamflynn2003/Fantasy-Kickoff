@@ -276,9 +276,13 @@ public void PopulateScrollView(List<PlayerData> players)
     {
         if (playerData?.player == null) continue;
 
-        // Craft player name using first name and last name from JSON
-        string firstName = playerData.player.firstname.Split(' ')[0];
-        string lastName = playerData.player.lastname.Split(' ')[0];
+        // Extract first name (left-to-right) and last name (right-to-left)
+        string[] firstNameParts = playerData.player.firstname.Split(' ');
+        string firstName = firstNameParts.Length > 0 ? firstNameParts[0] : string.Empty;
+
+        string[] lastNameParts = playerData.player.lastname.Split(' ');
+        string lastName = lastNameParts.Length > 0 ? lastNameParts[lastNameParts.Length - 1] : string.Empty;
+
         string fullPlayerName = $"{firstName} {lastName}";
 
         // Create a new list item with the player's name and image

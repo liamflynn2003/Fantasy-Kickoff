@@ -10,6 +10,7 @@ public class TeamDropdown : MonoBehaviour
 {
     public TMP_Dropdown leagueDropdown;
     public TMP_Dropdown teamDropdown;
+    private Dictionary<string, Sprite> logoCache = new Dictionary<string, Sprite>();
 
     private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
     private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season={1}";
@@ -97,6 +98,12 @@ private void PopulateTeamDropdown(TeamApiResponse response)
         TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData(teamData.team.name);
         options.Add(option);
         teamIdMap[teamData.team.name] = teamData.team.id; // Store team ID
+
+        // Start loading the logo for this team
+        if (!string.IsNullOrEmpty(teamData.team.logo))
+        {
+            StartCoroutine(LoadLogo(teamData.team.logo, option));
+        }
     }
 
     teamDropdown.AddOptions(options);
@@ -110,20 +117,42 @@ private void PopulateTeamDropdown(TeamApiResponse response)
         Debug.LogWarning("No valid options to set in the team dropdown.");
     }
 
-    // Re-enable listeners after setting the default value
     teamDropdown.onValueChanged.AddListener(delegate { FindObjectOfType<PlayerListManager>().OnTeamSelected(); });
 }
 
-    private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
+private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
+{
+    if (logoCache.ContainsKey(url))
     {
-        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-        yield return request.SendWebRequest();
-        Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-        Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-
-        option.image = logoSprite;
+        option.image = logoCache[url]; // Use cached logo
         teamDropdown.RefreshShownValue();
+        yield break;
     }
+
+    UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+    yield return request.SendWebRequest();
+
+    if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+    {
+        Debug.LogError("Error loading logo from URL: " + url + " - " + request.error);
+
+        // If rate-limited, wait for a short period before retrying
+        if (request.responseCode == 429) // HTTP 429 Too Many Requests
+        {
+            yield return new WaitForSeconds(1f); // Wait for 1 second before retrying
+            StartCoroutine(LoadLogo(url, option)); // Retry the request
+        }
+
+        yield break;
+    }
+
+    Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+    Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+
+    logoCache[url] = logoSprite; // Cache the logo
+    option.image = logoSprite; // Assign the logo to the dropdown option
+    teamDropdown.RefreshShownValue(); // Refresh the dropdown to display the updated logo
+}
 
     public int GetSelectedTeamId()
 {
