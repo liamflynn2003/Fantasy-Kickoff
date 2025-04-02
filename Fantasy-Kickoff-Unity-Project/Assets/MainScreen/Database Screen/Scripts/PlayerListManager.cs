@@ -6,7 +6,6 @@ using UnityEngine.UI;
 using TMPro;
 using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 
 public class PlayerListManager : MonoBehaviour
 {
@@ -38,31 +37,37 @@ public class PlayerListManager : MonoBehaviour
 
     public void CalculateSkillsFromJson(string json)
     {
-    PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
-    player = playerData;
-
-    // Ensure statistics is not null and has at least one element
-    var stats = statistics != null && statistics.Count > 0 ? statistics[0] : null;
-
-    if (stats != null)
+    try
     {
-        skill = new Skill
+        PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
+        player = playerData;
+
+        if (statistics != null && statistics.Count > 0)
         {
-            passing = Mathf.Clamp((stats.passes.total ?? 0) + (stats.passes.key ?? 0) * 2, 0, 100),
-            shooting = Mathf.Clamp((stats.goals.total ?? 0) * 10 + (stats.shots.on ?? 0) * 2, 0, 100),
-            tackling = Mathf.Clamp((stats.tackles.total ?? 0) * 2 + (stats.duels.won ?? 0), 0, 100),
-            saving = Mathf.Clamp((stats.goals.saves ?? 0) * 10, 0, 100),
-            agility = Mathf.Clamp((stats.dribbles.success ?? 0) * 2 + (stats.fouls.drawn ?? 0), 0, 100),
-            strength = Mathf.Clamp((stats.duels.total ?? 0) + (stats.fouls.committed ?? 0), 0, 100),
-            penaltyTaking = Mathf.Clamp((stats.penalty.scored ?? 0) * 10 - (stats.penalty.missed ?? 0) * 5, 0, 100),
-            jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
-        };
+            var stats = statistics[0];
+            skill = new Skill
+{
+    passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
+    shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
+    tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
+    saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
+    agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
+    strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
+    penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
+    jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
+};
+        }
+        else
+        {
+            Debug.LogWarning("No statistics available for this player.");
+        }
     }
-    else
+    catch (Exception ex)
     {
-        Debug.LogWarning("No statistics available for this player.");
+        Debug.LogError($"Error calculating skills from JSON: {ex.Message}");
     }
     }
+
     }
 
     public class PlayerJsonObject
@@ -193,7 +198,7 @@ private void OnLeagueChanged()
 }
 
 
-    private IEnumerator FetchAllPlayers(int teamId)
+private IEnumerator FetchAllPlayers(int teamId)
 {
     loadingPanel.SetActive(true);
 
@@ -212,48 +217,31 @@ private void OnLeagueChanged()
         if (request.result == UnityWebRequest.Result.ConnectionError || 
             request.result == UnityWebRequest.Result.ProtocolError)
         {
-            Debug.LogError("Error fetching player data: " + request.error);
-            loadingPanel.SetActive(false);
-            yield break;
+            Debug.LogError($"Error fetching player data: {request.error}. Retrying...");
+            yield return new WaitForSeconds(2f); // Retry after a delay
+            continue;
+        }
+
+        string jsonResponse = request.downloadHandler.text;
+        PlayerApiResponse response = JsonConvert.DeserializeObject<PlayerApiResponse>(jsonResponse);
+
+        if (response != null && response.response != null)
+        {
+            allPlayers.AddRange(response.response);
+            totalPages = response.paging.total;
+            currentPage++;
         }
         else
         {
-            string jsonResponse = request.downloadHandler.text;
-            PlayerApiResponse response = JsonConvert.DeserializeObject<PlayerApiResponse>(jsonResponse);
-
-            if (response != null && response.response != null)
-            {
-                foreach (var playerData in response.response)
-                {
-                    if (playerData.statistics != null && playerData.statistics.Count > 0)
-                    {
-                        var gameStats = playerData.statistics[0].games;
-                        int playerAppearances = gameStats.appearences ?? 0;
-
-                        if (playerAppearances > 0)
-                        {
-                            allPlayers.Add(playerData);
-                        }
-                    }
-                }
-
-                totalPages = response.paging.total;
-                currentPage++;
-            }
-            else
-            {
-                Debug.LogError("Invalid response received from API.");
-                loadingPanel.SetActive(false);
-                break;
-            }
+            Debug.LogError("Invalid response received from API.");
+            break;
         }
     }
 
     if (allPlayers.Count > 0)
     {
-        // Cache and save to local storage
         playerCache[teamId] = allPlayers;
-        localDataManager.SavePlayerData(allPlayers); // Save to local file
+        localDataManager.SavePlayerData(allPlayers);
     }
 
     PopulateScrollView(allPlayers);

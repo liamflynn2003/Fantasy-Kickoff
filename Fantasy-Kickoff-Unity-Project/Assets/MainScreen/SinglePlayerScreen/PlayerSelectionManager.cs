@@ -39,24 +39,33 @@ public class PlayerSelectionManager : MonoBehaviour
         return isTeamOne ? selectedTeamOne : selectedTeamTwo;
     }
 
-    // New Method: Load teams from JSON
     public void LoadTeamsFromJson(string json)
     {
-        try
-        {
-            var parsedData = JsonConvert.DeserializeObject<TeamJsonData>(json);
+    try
+    {
+        var parsedData = JsonConvert.DeserializeObject<TeamJsonData>(json);
 
-            // Populate Team 1
-            PopulateTeam(parsedData.team1.players, true);
-
-            // Populate Team 2
-            PopulateTeam(parsedData.team2.players, false);
-        }
-        catch (JsonException ex)
+        if (parsedData?.team1?.players == null || parsedData?.team2?.players == null)
         {
-            Debug.LogError("Failed to parse JSON: " + ex.Message);
+            Debug.LogError("Invalid JSON structure: Missing team or player data.");
+            return;
         }
+
+        // Populate Team 1
+        PopulateTeam(parsedData.team1.players, true);
+
+        // Populate Team 2
+        PopulateTeam(parsedData.team2.players, false);
     }
+    catch (JsonException ex)
+    {
+        Debug.LogError("Failed to parse JSON: " + ex.Message);
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError("Unexpected error while loading teams: " + ex.Message);
+    }
+        }
 
     private void PopulateTeam(List<PlayerJsonData> players, bool isTeamOne)
     {

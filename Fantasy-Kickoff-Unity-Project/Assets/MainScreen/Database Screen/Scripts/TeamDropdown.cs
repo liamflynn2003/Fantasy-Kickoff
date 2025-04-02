@@ -188,11 +188,11 @@ private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
 [System.Serializable]
 public class TeamApiResponse
 {
-    public TeamData[] response;
+    public DropdownTeamData[] response;
 }
 
 [System.Serializable]
-public class TeamData
+public class DropdownTeamData
 {
     public Team team;
 }
