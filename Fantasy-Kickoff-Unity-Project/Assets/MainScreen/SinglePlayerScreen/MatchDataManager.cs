@@ -5,7 +5,7 @@ using UnityEngine.Networking;
 public class MatchDataManager : MonoBehaviour
 {
     public PlayerSelectionManager selectionManager;
-    private string apiUrl = "https://your-api-endpoint.com/simulate";
+    private string serverUrl = "http://13.219.10.67:3000/simulate";
 
     public void SimulateMatch()
     {
@@ -20,7 +20,7 @@ public class MatchDataManager : MonoBehaviour
 
     private IEnumerator PostMatchData(string json)
     {
-        UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
+        UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
         byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(jsonToSend);
         request.downloadHandler = new DownloadHandlerBuffer();
