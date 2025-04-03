@@ -18,6 +18,8 @@ public class MatchDataManager : MonoBehaviour
         Debug.LogError("One or both teams are null. Cannot simulate match.");
         return;
     }
+    
+    MatchRequest matchRequest = new MatchRequest(teamOne, teamTwo);
 
     string jsonData = JsonUtility.ToJson(matchRequest);
 
