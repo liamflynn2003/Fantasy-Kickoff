@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -65,7 +66,7 @@ public class PlayerSelectionManager : MonoBehaviour
     {
         Debug.LogError("Unexpected error while loading teams: " + ex.Message);
     }
-        }
+    }
 
     private void PopulateTeam(List<PlayerJsonData> players, bool isTeamOne)
     {
