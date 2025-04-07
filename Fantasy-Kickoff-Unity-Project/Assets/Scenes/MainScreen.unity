@@ -2362,6 +2362,7 @@ GameObject:
   m_Component:
   - component: {fileID: 461649923}
   - component: {fileID: 461649925}
+  - component: {fileID: 461649926}
   m_Layer: 5
   m_Name: PlayerSelectionManager
   m_TagString: Untagged
@@ -2425,6 +2426,20 @@ MonoBehaviour:
   - {fileID: 1335609998}
   - {fileID: 1057579311}
   - {fileID: 15808034}
+--- !u!114 &461649926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 461649922}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b8985eee12c54542984861f05e414d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentPositionIndex: -1
+  isTeamOne: 1
 --- !u!1 &473850979
 GameObject:
   m_ObjectHideFlags: 0
@@ -2644,6 +2659,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2095181634605889691, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
       propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2095181634605889691, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
+      propertyPath: m_AnchoredPosition.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2095181635694683289, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
