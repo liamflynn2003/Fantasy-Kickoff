@@ -47,6 +47,8 @@ public class PlayerListManager : MonoBehaviour
         public string name;
         public string position;
         public int rating;
+
+        [JsonIgnore]
         public Vector2 currentPOS;
         public int fitness;
         public bool injured;
@@ -295,11 +297,18 @@ public class PlayerListManager : MonoBehaviour
                 StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
             }
 
-            Button button = playerListObject.GetComponent<Button>();
-            if (button != null)
+            Toggle toggle = playerListObject.GetComponent<Toggle>();
+            if (toggle != null)
             {
-                button.onClick.AddListener(() => OnPlayerItemClicked(playerData));
+                toggle.onValueChanged.AddListener((isOn) =>
+                {
+                    if (isOn)
+                {
+                Debug.Log("Player Item clicked!");
+                OnPlayerItemClicked(playerData);
             }
+        });
+    }   
 
             RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(93, yOffset);
@@ -314,34 +323,36 @@ public class PlayerListManager : MonoBehaviour
 
     private void OnPlayerItemClicked(PlayerData playerData)
     {
-        // Get the PlayerSelectionContext component
-        PlayerSelectionContext selectionContext = FindObjectOfType<PlayerSelectionContext>();
-        if (selectionContext == null)
-        {
-            Debug.LogError("PlayerSelectionContext not found in the scene.");
-            return;
-        }
+    Debug.Log("Player Item clicked!"); // Debug message added
 
-        // Get the PlayerSelectionManager component
-        PlayerSelectionManager selectionManager = FindObjectOfType<PlayerSelectionManager>();
-        if (selectionManager == null)
-        {
-            Debug.LogError("PlayerSelectionManager not found in the scene.");
-            return;
-        }
+    // Get the PlayerSelectionContext component
+    PlayerSelectionContext selectionContext = FindObjectOfType<PlayerSelectionContext>();
+    if (selectionContext == null)
+    {
+        Debug.LogError("PlayerSelectionContext not found in the scene.");
+        return;
+    }
 
-        // Use the currentPositionIndex from the selection context
-        int positionIndex = selectionContext.currentPositionIndex;
-        if (positionIndex == -1)
-        {
-            Debug.LogError("Invalid position index in PlayerSelectionContext.");
-            return;
-        }
+    // Get the PlayerSelectionManager component
+    PlayerSelectionManager selectionManager = FindObjectOfType<PlayerSelectionManager>();
+    if (selectionManager == null)
+    {
+        Debug.LogError("PlayerSelectionManager not found in the scene.");
+        return;
+    }
 
-        // Assign the player data to the correct team and position
-        selectionManager.AssignPlayer(positionIndex, playerData, selectionContext.isTeamOne);
+    // Use the currentPositionIndex from the selection context
+    int positionIndex = selectionContext.currentPositionIndex;
+    if (positionIndex == -1)
+    {
+        Debug.LogError("Invalid position index in PlayerSelectionContext.");
+        return;
+    }
 
-        Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}.");
+    // Assign the player data to the correct team and position
+    selectionManager.AssignPlayer(positionIndex, playerData, selectionContext.isTeamOne);
+
+    Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}.");
     }
 
     // ============================
