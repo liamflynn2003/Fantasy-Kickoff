@@ -16,7 +16,6 @@ public class PlayerListManager : MonoBehaviour
     // UI Elements
     public TMP_Dropdown teamDropdown;
     public TMP_Dropdown leagueDropdown;
-    public Transform contentPanel;
     public Transform contentParent;
     public GameObject playerListPrefab;
     public GameObject loadingPanel;
@@ -44,7 +43,7 @@ public class PlayerListManager : MonoBehaviour
         public PlayerJsonObject player;
         public Skill skill;
         public List<PlayerStatistics> statistics;
-        
+
         public string name;
         public string position;
         public int rating;
