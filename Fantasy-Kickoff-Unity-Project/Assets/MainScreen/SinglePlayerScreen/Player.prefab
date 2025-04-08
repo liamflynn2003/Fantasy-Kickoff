@@ -46,7 +46,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2801952825347804688}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ae2447bd4ce2994ab9cf2c6f7685fa9, type: 3}
+  m_Script: {fileID: 11500000, guid: 2847e2b8d9c62c249b2e22db1a7d8640, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   playerScrollView: {fileID: 0}
@@ -321,7 +321,7 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 1
-      - m_Target: {fileID: 8751307423697765470}
+      - m_Target: {fileID: 799328238436033552}
         m_TargetAssemblyTypeName: PositionSlotClick, Assembly-CSharp
         m_MethodName: SetPositionSlotContext
         m_Mode: 1
@@ -342,7 +342,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1349754479492469178}
-  - component: {fileID: 8751307423697765470}
+  - component: {fileID: 799328238436033552}
   m_Layer: 5
   m_Name: SetContextFunc
   m_TagString: Untagged
@@ -370,7 +370,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &8751307423697765470
+--- !u!114 &799328238436033552
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -379,6 +379,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 9042793591832168503}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8357b7e1dfdd5f647a27719510751677, type: 3}
+  m_Script: {fileID: 11500000, guid: 067bee03854b01d4c8088943dd1bda6c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
