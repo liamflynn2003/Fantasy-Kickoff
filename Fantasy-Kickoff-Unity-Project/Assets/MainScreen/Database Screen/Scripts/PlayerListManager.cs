@@ -9,6 +9,11 @@ using System;
 
 public class PlayerListManager : MonoBehaviour
 {
+    // ============================
+    // Fields and Variables
+    // ============================
+
+    // UI Elements
     public TMP_Dropdown teamDropdown;
     public TMP_Dropdown leagueDropdown;
     public Transform contentPanel;
@@ -16,58 +21,69 @@ public class PlayerListManager : MonoBehaviour
     public GameObject playerListPrefab;
     public GameObject loadingPanel;
 
+    // API Configuration
     private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
     private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
-    private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
 
+    // Data Caching
+    private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
     private LocalDataManager localDataManager;
+
+    // ============================
+    // Nested Classes
+    // ============================
 
     public class PlayerApiResponse
     {
-    public List<PlayerData> response;
-    public PagingInfo paging;
+        public List<PlayerData> response;
+        public PagingInfo paging;
     }
 
-    // JSON Classes - Store the direct JSON Info
-   public class PlayerData
+    public class PlayerData
     {
-    public PlayerJsonObject player;
-    public Skill skill;
-    public List<PlayerStatistics> statistics;
+        public PlayerJsonObject player;
+        public Skill skill;
+        public List<PlayerStatistics> statistics;
+        
+        public string name;
+        public string position;
+        public int rating;
+        public Vector2 currentPOS;
+        public int fitness;
+        public bool injured;
 
-    public void CalculateSkillsFromJson(string json)
-    {
-    try
-    {
-        PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
-        player = playerData;
-
-        if (statistics != null && statistics.Count > 0)
+        public void CalculateSkillsFromJson(string json)
         {
-            var stats = statistics[0];
-            skill = new Skill
-{
-    passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
-    shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
-    tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
-    saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
-    agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
-    strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
-    penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
-    jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
-};
-        }
-        else
-        {
-            Debug.LogWarning("No statistics available for this player.");
-        }
-    }
-    catch (Exception ex)
-    {
-        Debug.LogError($"Error calculating skills from JSON: {ex.Message}");
-    }
-    }
+            try
+            {
+                PlayerJsonObject playerData = JsonConvert.DeserializeObject<PlayerJsonObject>(json);
+                player = playerData;
 
+                if (statistics != null && statistics.Count > 0)
+                {
+                    var stats = statistics[0];
+                    skill = new Skill
+                    {
+                        passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
+                        shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
+                        tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
+                        saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
+                        agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
+                        strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
+                        penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
+                        jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
+                    };
+                }
+                else
+                {
+                    Debug.LogWarning("No statistics available for this player.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error calculating skills from JSON: {ex.Message}");
+            }
+        }
     }
 
     public class PlayerJsonObject
@@ -115,217 +131,259 @@ public class PlayerListManager : MonoBehaviour
     public class FoulStatistics { public int? drawn; public int? committed; }
     public class PenaltyStatistics { public int? scored; public int? missed; }
 
-    // Game Object that Translates JSON version of Player to a Game Object to be used in the game
-    public class Player : MonoBehaviour
-    {
-    public string playerName; 
-    public string position; 
-    public int rating;
-    public Skill skill;
-    public Vector2 currentPOS;
-    }
-
     public class PagingInfo
     {
-    public int current;
-    public int total;
+        public int current;
+        public int total;
     }
 
-private void Start()
-{
-    localDataManager = GetComponent<LocalDataManager>();
-    playerCache = localDataManager.LoadCache();
+    // ============================
+    // Unity Lifecycle Methods
+    // ============================
 
-    if (teamDropdown != null)
+    private void Start()
     {
-        leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
-        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+        localDataManager = GetComponent<LocalDataManager>();
+        playerCache = localDataManager.LoadCache();
 
-        SetInitialTeamDropdownValue();
+        if (teamDropdown != null)
+        {
+            leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
+            teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+
+            SetInitialTeamDropdownValue();
+        }
+
+        OnLeagueChanged(); // Trigger initial league change
     }
-
-    OnLeagueChanged(); // Trigger initial league change
-}
 
     private void OnApplicationQuit()
     {
         localDataManager.SaveCache(playerCache);
     }
 
-    private IEnumerator WaitForTwoSecondsAndSelect()
+    // ============================
+    // Dropdown Event Handlers
+    // ============================
+
+    private void SetInitialTeamDropdownValue()
     {
-    // Wait for 2 seconds
-    yield return new WaitForSeconds(2f);
-        OnTeamSelected();
+        if (teamDropdown.options.Count > 0)
+        {
+            Debug.Log("Setting team dropdown to default index (0).");
+            teamDropdown.value = 0; // Set to the first option
+        }
+        else
+        {
+            Debug.LogWarning("Dropdown does not have enough options.");
+        }
+    }
+
+    private void OnLeagueChanged()
+    {
+        Debug.Log("League dropdown changed. Current league index: " + leagueDropdown.value);
+    }
+
+    public void OnTeamSelected()
+    {
+        int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
+        if (teamId > 0)
+        {
+            if (playerCache.ContainsKey(teamId))
+            {
+                Debug.Log("Using cached data for team ID: " + teamId);
+                PopulateScrollView(playerCache[teamId]); // Display cached data
+            }
+            else
+            {
+                Debug.Log("Fetching data from API for team ID: " + teamId);
+                StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
+            }
+        }
+    }
+
+    // ============================
+    // API Handling
+    // ============================
+
+    private IEnumerator FetchAllPlayers(int teamId)
+    {
+        loadingPanel.SetActive(true);
+
+        int currentPage = 1;
+        int totalPages = 1;
+        List<PlayerData> allPlayers = new List<PlayerData>();
+
+        while (currentPage <= totalPages)
+        {
+            string apiUrl = string.Format(baseUrl, teamId, currentPage);
+            UnityWebRequest request = UnityWebRequest.Get(apiUrl);
+            request.SetRequestHeader("x-apisports-key", apiKey);
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.ConnectionError ||
+                request.result == UnityWebRequest.Result.ProtocolError)
+            {
+                Debug.LogError($"Error fetching player data: {request.error}. Retrying...");
+                yield return new WaitForSeconds(2f); // Retry after a delay
+                continue;
+            }
+
+            string jsonResponse = request.downloadHandler.text;
+            PlayerApiResponse response = JsonConvert.DeserializeObject<PlayerApiResponse>(jsonResponse);
+
+            if (response != null && response.response != null)
+            {
+                allPlayers.AddRange(response.response);
+                totalPages = response.paging.total;
+                currentPage++;
+            }
+            else
+            {
+                Debug.LogError("Invalid response received from API.");
+                break;
+            }
+        }
+
+        if (allPlayers.Count > 0)
+        {
+            playerCache[teamId] = allPlayers;
+            localDataManager.SavePlayerData(allPlayers);
+        }
+
+        PopulateScrollView(allPlayers);
         loadingPanel.SetActive(false);
     }
 
-private void SetInitialTeamDropdownValue()
-{
-    if (teamDropdown.options.Count > 0)
-    {
-        Debug.Log("Setting team dropdown to default index (0).");
-        teamDropdown.value = 0; // Set to the first option
-    }
-    else
-    {
-        Debug.LogWarning("Dropdown does not have enough options.");
-    }
-}
+    // ============================
+    // Scroll View Population
+    // ============================
 
-private void OnLeagueChanged()
-{
-    Debug.Log("League dropdown changed. Current league index: " + leagueDropdown.value);
-}
-
-    public void OnTeamSelected()
-{
-    int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
-    if (teamId > 0)
+    public void PopulateScrollView(List<PlayerData> players)
     {
-        if (playerCache.ContainsKey(teamId))
+        foreach (Transform child in contentParent)
         {
-            Debug.Log("Using cached data for team ID: " + teamId);
-            PopulateScrollView(playerCache[teamId]); // Display cached data
-        }
-        else
-        {
-            // If no cached data is found, fetch new data from the API
-            Debug.Log("Fetching data from API for team ID: " + teamId);
-            StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
-        }
-    }
-}
-
-
-private IEnumerator FetchAllPlayers(int teamId)
-{
-    loadingPanel.SetActive(true);
-
-    int currentPage = 1;
-    int totalPages = 1;
-    List<PlayerData> allPlayers = new List<PlayerData>();
-
-    while (currentPage <= totalPages)
-    {
-        string apiUrl = string.Format(baseUrl, teamId, currentPage);
-        UnityWebRequest request = UnityWebRequest.Get(apiUrl);
-        request.SetRequestHeader("x-apisports-key", apiKey);
-
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.ConnectionError || 
-            request.result == UnityWebRequest.Result.ProtocolError)
-        {
-            Debug.LogError($"Error fetching player data: {request.error}. Retrying...");
-            yield return new WaitForSeconds(2f); // Retry after a delay
-            continue;
+            Destroy(child.gameObject);
         }
 
-        string jsonResponse = request.downloadHandler.text;
-        PlayerApiResponse response = JsonConvert.DeserializeObject<PlayerApiResponse>(jsonResponse);
+        float yOffset = -10f;
+        float itemHeight = 20f;
+        float spacing = 0f;
 
-        if (response != null && response.response != null)
+        for (int i = 0; i < players.Count; i++)
         {
-            allPlayers.AddRange(response.response);
-            totalPages = response.paging.total;
-            currentPage++;
-        }
-        else
-        {
-            Debug.LogError("Invalid response received from API.");
-            break;
-        }
-    }
+            var playerData = players[i];
+            if (playerData?.player == null) continue;
 
-    if (allPlayers.Count > 0)
-    {
-        playerCache[teamId] = allPlayers;
-        localDataManager.SavePlayerData(allPlayers);
-    }
+            // Extract first name and last name
+            string[] firstNameParts = playerData.player.firstname.Split(' ');
+            string firstName = firstNameParts.Length > 0 ? firstNameParts[0] : string.Empty;
 
-    PopulateScrollView(allPlayers);
-    loadingPanel.SetActive(false);
-}
+            string[] lastNameParts = playerData.player.lastname.Split(' ');
+            string lastName = lastNameParts.Length > 0 ? lastNameParts[lastNameParts.Length - 1] : string.Empty;
 
+            string fullPlayerName = $"{firstName} {lastName}";
 
-public void PopulateScrollView(List<PlayerData> players)
-{
-    foreach (Transform child in contentParent)
-    {
-        Destroy(child.gameObject);
-    }
+            // Create a new list item with the player's name and image
+            GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
+            TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
+            nameText.text = fullPlayerName;
+            Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
 
-    float yOffset = -10f;
-    float itemHeight = 20f;
-    float spacing = 0f;
+            if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
+            {
+                StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
+            }
 
-    foreach (var playerData in players)
-    {
-        if (playerData?.player == null) continue;
+            Button button = playerListObject.GetComponent<Button>();
+            if (button != null)
+            {
+                button.onClick.AddListener(() => OnPlayerItemClicked(playerData));
+            }
 
-        // Extract first name (left-to-right) and last name (right-to-left)
-        string[] firstNameParts = playerData.player.firstname.Split(' ');
-        string firstName = firstNameParts.Length > 0 ? firstNameParts[0] : string.Empty;
+            RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(93, yOffset);
 
-        string[] lastNameParts = playerData.player.lastname.Split(' ');
-        string lastName = lastNameParts.Length > 0 ? lastNameParts[lastNameParts.Length - 1] : string.Empty;
-
-        string fullPlayerName = $"{firstName} {lastName}";
-
-        // Create a new list item with the player's name and image
-        GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
-        TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
-        nameText.text = fullPlayerName;
-        Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
-
-        if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
-        {
-            StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
+            yOffset -= (itemHeight + spacing);
         }
 
-        RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = new Vector2(93, yOffset);
-
-        yOffset -= (itemHeight + spacing);
+        RectTransform contentRect = contentParent.GetComponent<RectTransform>();
+        contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
+        contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
     }
 
-    RectTransform contentRect = contentParent.GetComponent<RectTransform>();
-    contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
-    contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
-}
+    private void OnPlayerItemClicked(PlayerData playerData)
+    {
+        // Get the PlayerSelectionContext component
+        PlayerSelectionContext selectionContext = FindObjectOfType<PlayerSelectionContext>();
+        if (selectionContext == null)
+        {
+            Debug.LogError("PlayerSelectionContext not found in the scene.");
+            return;
+        }
+
+        // Get the PlayerSelectionManager component
+        PlayerSelectionManager selectionManager = FindObjectOfType<PlayerSelectionManager>();
+        if (selectionManager == null)
+        {
+            Debug.LogError("PlayerSelectionManager not found in the scene.");
+            return;
+        }
+
+        // Use the currentPositionIndex from the selection context
+        int positionIndex = selectionContext.currentPositionIndex;
+        if (positionIndex == -1)
+        {
+            Debug.LogError("Invalid position index in PlayerSelectionContext.");
+            return;
+        }
+
+        // Assign the player data to the correct team and position
+        selectionManager.AssignPlayer(positionIndex, playerData, selectionContext.isTeamOne);
+
+        Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}.");
+    }
+
+    // ============================
+    // Image Loading
+    // ============================
 
     private IEnumerator LoadPlayerImage(string url, Image playerImage)
-{
-    Sprite cachedSprite = PlayerImageCache.Instance.GetImage(url);
-    if (cachedSprite != null)
     {
-        playerImage.sprite = cachedSprite;
-        yield break;
+        Sprite cachedSprite = PlayerImageCache.Instance.GetImage(url);
+        if (cachedSprite != null)
+        {
+            playerImage.sprite = cachedSprite;
+            yield break;
+        }
+
+        yield return LoadImageFromUrl(url, playerImage);
+
+        if (playerImage.sprite == null)
+        {
+            string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
+            yield return LoadImageFromUrl(placeholderUrl, playerImage);
+        }
     }
 
-    yield return LoadImageFromUrl(url, playerImage);
-
-    if (playerImage.sprite == null)
+    private IEnumerator LoadImageFromUrl(string url, Image playerImage)
     {
-        string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
-        yield return LoadImageFromUrl(placeholderUrl, playerImage);
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
+        {
+            Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
+            playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            PlayerImageCache.Instance.CacheImage(url, playerImage.sprite);
+        }
     }
 }
 
-private IEnumerator LoadImageFromUrl(string url, Image playerImage)
-{
-    UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-    yield return request.SendWebRequest();
-
-    if (request.result == UnityWebRequest.Result.Success)
-    {
-        Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-        playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-        PlayerImageCache.Instance.CacheImage(url, playerImage.sprite);
-    }
-}
-}
+// ============================
+// Image Cache Singleton
+// ============================
 
 public class PlayerImageCache
 {

@@ -9,10 +9,10 @@ public class PlayerSelectionManager : MonoBehaviour
 {
     public GameObject[] teamOnePlayers;
     public GameObject[] teamTwoPlayers;
-    private Dictionary<int, PlayerData> selectedTeamOne = new Dictionary<int, PlayerData>();
-    private Dictionary<int, PlayerData> selectedTeamTwo = new Dictionary<int, PlayerData>();
+    private Dictionary<int, PlayerListManager.PlayerData> selectedTeamOne = new Dictionary<int, PlayerListManager.PlayerData>();
+    private Dictionary<int, PlayerListManager.PlayerData> selectedTeamTwo = new Dictionary<int, PlayerListManager.PlayerData>();
 
-    public void AssignPlayer(int positionIndex, PlayerData player, bool isTeamOne)
+    public void AssignPlayer(int positionIndex, PlayerListManager.PlayerData player, bool isTeamOne)
     {
         if (isTeamOne)
         {
@@ -26,16 +26,14 @@ public class PlayerSelectionManager : MonoBehaviour
         }
     }
 
-    private void UpdateUI(GameObject playerUI, PlayerData player)
+    private void UpdateUI(GameObject playerUI, PlayerListManager.PlayerData player)
     {
         TMP_Text nameText = playerUI.transform.Find("PlayerName").GetComponent<TMP_Text>();
-        Image jerseyImage = playerUI.transform.Find("JerseyImage").GetComponent<Image>();
 
         if (nameText) nameText.text = player.name;
-        if (jerseyImage) jerseyImage.sprite = player.jerseySprite; // Ensure jerseySprite is set correctly
     }
 
-    public Dictionary<int, PlayerData> GetSelectedTeam(bool isTeamOne)
+    public Dictionary<int, PlayerListManager.PlayerData> GetSelectedTeam(bool isTeamOne)
     {
         return isTeamOne ? selectedTeamOne : selectedTeamTwo;
     }
@@ -75,7 +73,7 @@ public class PlayerSelectionManager : MonoBehaviour
         for (int i = 0; i < players.Count && i < teamPlayers.Length; i++)
         {
             PlayerJsonData playerJson = players[i];
-            PlayerData playerData = new PlayerData
+            PlayerListManager.PlayerData playerData = new PlayerListManager.PlayerData
             {
                 name = playerJson.name,
                 position = playerJson.position,
@@ -89,58 +87,29 @@ public class PlayerSelectionManager : MonoBehaviour
             AssignPlayer(i, playerData, isTeamOne);
         }
     }
+    public class PlayerJsonData
+{
+    public string name;
+    public string position;
+    public string rating;
+    public PlayerListManager.Skill skill;
+    public List<float> currentPOS;
+    public int fitness;
+    public bool injured;
+}
 }
 
-// Supporting Classes for JSON Parsing
-[System.Serializable]
 public class TeamJsonData
 {
     public TeamData team1;
     public TeamData team2;
 }
 
-[System.Serializable]
 public class TeamData
 {
     public string name;
     public int rating;
-    public List<PlayerJsonData> players;
+    public List<PlayerSelectionManager.PlayerJsonData> players;
 }
 
-[System.Serializable]
-public class PlayerJsonData
-{
-    public string name;
-    public string position;
-    public string rating;
-    public Skill skill;
-    public List<float> currentPOS;
-    public int fitness;
-    public bool injured;
-}
 
-[System.Serializable]
-public class PlayerData
-{
-    public string name;
-    public string position;
-    public int rating;
-    public Skill skill;
-    public Vector2 currentPOS;
-    public int fitness;
-    public bool injured;
-    public Sprite jerseySprite;
-}
-
-[System.Serializable]
-public class Skill
-{
-    public int passing;
-    public int shooting;
-    public int tackling;
-    public int saving;
-    public int agility;
-    public int strength;
-    public int penalty_taking;
-    public int jumping;
-}

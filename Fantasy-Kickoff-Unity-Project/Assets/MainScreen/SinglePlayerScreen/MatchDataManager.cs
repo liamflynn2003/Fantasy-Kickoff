@@ -10,8 +10,8 @@ public class MatchDataManager : MonoBehaviour
 
     public void SimulateMatch()
     {
-        Dictionary<int, PlayerData> teamOne = selectionManager.GetSelectedTeam(true);
-        Dictionary<int, PlayerData> teamTwo = selectionManager.GetSelectedTeam(false);
+        Dictionary<int, PlayerListManager.PlayerData> teamOne = selectionManager.GetSelectedTeam(true);
+        Dictionary<int, PlayerListManager.PlayerData> teamTwo = selectionManager.GetSelectedTeam(false);
 
         if (teamOne == null || teamTwo == null)
         {
@@ -60,20 +60,20 @@ public class MatchRequest
     public TeamData team2;
     public PitchDetails pitchDetails;
 
-    public MatchRequest(Dictionary<int, PlayerData> teamOneDict, Dictionary<int, PlayerData> teamTwoDict)
+    public MatchRequest(Dictionary<int, PlayerListManager.PlayerData> teamOneDict, Dictionary<int, PlayerListManager.PlayerData> teamTwoDict)
     {
         team1 = new TeamData
         {
             name = "TeamOne",
             rating = 90,
-            players = ConvertToJsonData(new List<PlayerData>(teamOneDict.Values))
+            players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamOneDict.Values))
         };
 
         team2 = new TeamData
         {
             name = "TeamTwo",
             rating = 90,
-            players = ConvertToJsonData(new List<PlayerData>(teamTwoDict.Values))
+            players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamTwoDict.Values))
         };
 
         pitchDetails = new PitchDetails
@@ -84,26 +84,26 @@ public class MatchRequest
         };
     }
 
-    private static List<PlayerJsonData> ConvertToJsonData(List<PlayerData> playerDataList)
+private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(List<PlayerListManager.PlayerData> playerDataList)
+{
+    List<PlayerSelectionManager.PlayerJsonData> jsonList = new List<PlayerSelectionManager.PlayerJsonData>();
+
+    foreach (var player in playerDataList)
     {
-        List<PlayerJsonData> jsonList = new List<PlayerJsonData>();
-
-        foreach (var player in playerDataList)
+        jsonList.Add(new PlayerSelectionManager.PlayerJsonData
         {
-            jsonList.Add(new PlayerJsonData
-            {
-                name = player.name,
-                position = player.position,
-                rating = player.rating.ToString(),
-                skill = player.skill,
-                currentPOS = new List<float> { player.currentPOS.x, player.currentPOS.y },
-                fitness = player.fitness,
-                injured = player.injured
-            });
-        }
-
-        return jsonList;
+            name = $"{player.player.firstname} {player.player.lastname}",
+            position = "NA",
+            rating = "0",
+            skill = player.skill,
+            currentPOS = new List<float> { 0, 0 },
+            fitness = 100,
+            injured = false
+        });
     }
+
+    return jsonList;
+}
 }
 
 [System.Serializable]
