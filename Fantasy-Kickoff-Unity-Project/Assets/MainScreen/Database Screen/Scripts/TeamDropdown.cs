@@ -11,6 +11,7 @@ public class TeamDropdown : MonoBehaviour
     public TMP_Dropdown leagueDropdown;
     public TMP_Dropdown teamDropdown;
     private Dictionary<string, Sprite> logoCache = new Dictionary<string, Sprite>();
+    private Coroutine leagueChangeCoroutine;
 
     private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
     private string baseUrl = "https://v3.football.api-sports.io/teams?league={0}&season={1}";
@@ -28,6 +29,16 @@ public class TeamDropdown : MonoBehaviour
 
 private void OnLeagueChanged()
 {
+    if (leagueChangeCoroutine != null)
+    {
+        StopCoroutine(leagueChangeCoroutine);
+    }
+    leagueChangeCoroutine = StartCoroutine(DebouncedLeagueChange());
+}
+
+private IEnumerator DebouncedLeagueChange()
+{
+    yield return new WaitForSeconds(0.5f); // Wait for 0.5 seconds to debounce
     string selectedLeague = leagueDropdown.options[leagueDropdown.value].text;
     Debug.Log("Selected League: " + selectedLeague);
 
@@ -92,6 +103,8 @@ private void PopulateTeamDropdown(TeamApiResponse response)
     teamIdMap.Clear(); // Clear previous team IDs
 
     List<TMP_Dropdown.OptionData> options = new List<TMP_Dropdown.OptionData>();
+    List<string> logoUrls = new List<string>();
+    List<TMP_Dropdown.OptionData> logoOptions = new List<TMP_Dropdown.OptionData>();
 
     foreach (var teamData in response.response)
     {
@@ -99,10 +112,11 @@ private void PopulateTeamDropdown(TeamApiResponse response)
         options.Add(option);
         teamIdMap[teamData.team.name] = teamData.team.id; // Store team ID
 
-        // Start loading the logo for this team
+        // Collect logo URLs and options for batch processing
         if (!string.IsNullOrEmpty(teamData.team.logo))
         {
-            StartCoroutine(LoadLogo(teamData.team.logo, option));
+            logoUrls.Add(teamData.team.logo);
+            logoOptions.Add(option);
         }
     }
 
@@ -117,7 +131,19 @@ private void PopulateTeamDropdown(TeamApiResponse response)
         Debug.LogWarning("No valid options to set in the team dropdown.");
     }
 
+    // Start loading logos in batches
+    StartCoroutine(LoadLogosInBatches(logoUrls, logoOptions));
+
     teamDropdown.onValueChanged.AddListener(delegate { FindObjectOfType<PlayerListManager>().OnTeamSelected(); });
+}
+
+private IEnumerator LoadLogosInBatches(List<string> urls, List<TMP_Dropdown.OptionData> options)
+{
+    for (int i = 0; i < urls.Count; i++)
+    {
+        yield return LoadLogo(urls[i], options[i]);
+        yield return new WaitForSeconds(0.1f);
+    }
 }
 
 private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
@@ -130,28 +156,42 @@ private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
     }
 
     UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-    yield return request.SendWebRequest();
+    int retryCount = 0;
+    const int maxRetries = 5;
 
-    if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
+    while (retryCount < maxRetries)
     {
-        Debug.LogError("Error loading logo from URL: " + url + " - " + request.error);
+        yield return request.SendWebRequest();
 
-        // If rate-limited, wait for a short period before retrying
-        if (request.responseCode == 429) // HTTP 429 Too Many Requests
+        if (request.result == UnityWebRequest.Result.ConnectionError || request.result == UnityWebRequest.Result.ProtocolError)
         {
-            yield return new WaitForSeconds(1f); // Wait for 1 second before retrying
-            StartCoroutine(LoadLogo(url, option)); // Retry the request
-        }
+            if (request.responseCode == 429)
+            {
+                retryCount++;
+                float waitTime = Mathf.Pow(2, retryCount);
+                Debug.LogWarning($"Rate limit hit. Retrying in {waitTime} seconds...");
+                yield return new WaitForSeconds(waitTime);
+                continue; // Retry the request
+            }
 
+            Debug.LogError("Error loading logo from URL: " + url + " - " + request.error);
+            yield break;
+        }
+        break;
+    }
+
+    if (retryCount == maxRetries)
+    {
+        Debug.LogError("Max retries reached. Failed to load logo from URL: " + url);
         yield break;
     }
 
+    // Process the successful response
     Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
     Sprite logoSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-
-    logoCache[url] = logoSprite; // Cache the logo
-    option.image = logoSprite; // Assign the logo to the dropdown option
-    teamDropdown.RefreshShownValue(); // Refresh the dropdown to display the updated logo
+    logoCache[url] = logoSprite;
+    option.image = logoSprite; 
+    teamDropdown.RefreshShownValue();
 }
 
     public int GetSelectedTeamId()

@@ -236,7 +236,20 @@ public class PlayerListManager : MonoBehaviour
 
             if (response != null && response.response != null)
             {
-                allPlayers.AddRange(response.response);
+                foreach (var playerData in response.response)
+                {
+                    if (playerData.statistics != null && playerData.statistics.Count > 0)
+                    {
+                        int appearances = playerData.statistics[0].games?.appearences ?? 0;
+
+                            if (appearances > 0)
+                            {
+                                allPlayers.Add(playerData);
+                            }
+                    }
+                }
+
+
                 totalPages = response.paging.total;
                 currentPage++;
             }
