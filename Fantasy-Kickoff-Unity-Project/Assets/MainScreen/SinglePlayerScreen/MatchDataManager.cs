@@ -93,16 +93,30 @@ private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(Lis
         jsonList.Add(new PlayerSelectionManager.PlayerJsonData
         {
             name = $"{player.player.firstname} {player.player.lastname}",
-            position = "NA",
-            rating = "0",
+            position = player.position,
+            rating = CalculateAverageSkill(player.skill).ToString(),
             skill = player.skill,
-            currentPOS = new List<float> { 0, 0 },
+            currentPos = player.currentPos,
             fitness = 100,
             injured = false
         });
     }
 
     return jsonList;
+}
+
+private static int CalculateAverageSkill(PlayerListManager.Skill skill)
+{
+    int total = skill.passing +
+                skill.shooting +
+                skill.tackling +
+                skill.saving +
+                skill.agility +
+                skill.strength +
+                skill.penaltyTaking +
+                skill.jumping;
+
+    return Mathf.RoundToInt((float)total / 8);
 }
 }
 

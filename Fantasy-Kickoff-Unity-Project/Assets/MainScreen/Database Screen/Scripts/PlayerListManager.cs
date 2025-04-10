@@ -49,7 +49,7 @@ public class PlayerListManager : MonoBehaviour
         public int rating;
 
         [JsonIgnore]
-        public Vector2 currentPOS;
+        public Vector2 currentPos;
         public int fitness;
         public bool injured;
 
@@ -63,17 +63,19 @@ public class PlayerListManager : MonoBehaviour
                 if (statistics != null && statistics.Count > 0)
                 {
                     var stats = statistics[0];
-                    skill = new Skill
-                    {
-                        passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
-                        shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
-                        tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
-                        saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
-                        agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
-                        strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
-                        penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
-                        jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
-                    };
+skill = new Skill
+{
+    passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
+    shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
+    tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
+    saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
+    agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
+    strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
+    penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
+    jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
+};
+
+
                 }
                 else
                 {
@@ -361,11 +363,15 @@ public class PlayerListManager : MonoBehaviour
         Debug.LogError("Invalid position index in PlayerSelectionContext.");
         return;
     }
-
     // Assign the player data to the correct team and position
     selectionManager.AssignPlayer(positionIndex, playerData, selectionContext.isTeamOne);
 
-    Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}.");
+    // Serialize the entire player data to JSON string for logging
+    string playerJson = JsonConvert.SerializeObject(playerData);
+
+    // Log the player's first and last name along with the serialized player data
+    Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}. Player Data: {playerJson}");
+
     }
 
     // ============================

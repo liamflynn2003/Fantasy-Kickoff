@@ -15,16 +15,58 @@ public class PlayerSelectionManager : MonoBehaviour
     public void AssignPlayer(int positionIndex, PlayerListManager.PlayerData player, bool isTeamOne)
     {
         if (isTeamOne)
-        {
+        {   
+            player.position = CalculatePosition(positionIndex);
+            player.currentPos= CalculateCurrentPos(positionIndex, isTeamOne);
             selectedTeamOne[positionIndex] = player;
             UpdateUI(teamOnePlayers[positionIndex], player);
         }
         else
         {
+            player.position = CalculatePosition(positionIndex);
+            player.currentPos=CalculateCurrentPos(positionIndex, isTeamOne);
             selectedTeamTwo[positionIndex] = player;
             UpdateUI(teamTwoPlayers[positionIndex], player);
         }
     }
+
+    public string CalculatePosition(int positionIndex)
+    {
+        switch (positionIndex)
+        {
+            case 0: return "GK";
+            case 1: return "RB";
+            case 2: return "CB";
+            case 3: return "CB";
+            case 4: return "LB";
+            case 5: return "RM";
+            case 6: return "CM";
+            case 7: return "LM";
+            case 8: return "RW";
+            case 9: return "ST";
+            case 10: return "LW";
+            default: return "Unknown";
+        }
+    }
+
+    public Vector2 CalculateCurrentPos(int positionIndex, bool isTeamOne)
+{
+        switch (positionIndex)
+        {
+            case 0: return new Vector2(340, 0);   // GK
+            case 1: return new Vector2(600, 80);  // RB
+            case 2: return new Vector2(420, 80); // CB
+            case 3: return new Vector2(230, 80); // CB
+            case 4: return new Vector2(80, 80); // LB
+            case 5: return new Vector2(510, 270); // RM
+            case 6: return new Vector2(340, 270); // CM
+            case 7: return new Vector2(170, 270); // LM
+            case 8: return new Vector2(510, 500); // RW
+            case 9: return new Vector2(340, 500); // ST
+            case 10: return new Vector2(170, 500); // LW
+            default: return new Vector2(340, 500);   // Default position
+        }
+}
 
     private void UpdateUI(GameObject playerUI, PlayerListManager.PlayerData player)
     {
@@ -77,9 +119,9 @@ public class PlayerSelectionManager : MonoBehaviour
             {
                 name = playerJson.name,
                 position = playerJson.position,
-                rating = int.Parse(playerJson.rating),
+                rating = 50,
                 skill = playerJson.skill,
-                currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
+                currentPos = new Vector2(playerJson.currentPos[0], playerJson.currentPos[1]),
                 fitness = playerJson.fitness,
                 injured = playerJson.injured
             };
@@ -93,7 +135,7 @@ public class PlayerSelectionManager : MonoBehaviour
     public string position;
     public string rating;
     public PlayerListManager.Skill skill;
-    public List<float> currentPOS;
+    public Vector2 currentPos;
     public int fitness;
     public bool injured;
 }
