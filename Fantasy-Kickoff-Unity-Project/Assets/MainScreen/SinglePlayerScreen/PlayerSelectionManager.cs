@@ -120,7 +120,7 @@ public class PlayerSelectionManager : MonoBehaviour
                 name = playerJson.name,
                 position = playerJson.position,
                 rating = 50,
-                skill = playerJson.skill,
+                skill = ConvertToSkill(playerJson.skill),
                 currentPos = new Vector2(playerJson.currentPos[0], playerJson.currentPos[1]),
                 fitness = playerJson.fitness,
                 injured = playerJson.injured
@@ -129,12 +129,30 @@ public class PlayerSelectionManager : MonoBehaviour
             AssignPlayer(i, playerData, isTeamOne);
         }
     }
+
+    private PlayerListManager.Skill ConvertToSkill(Dictionary<string, string> skillDict)
+{
+    PlayerListManager.Skill skill = new PlayerListManager.Skill
+    {
+        passing = int.Parse(skillDict["passing"]),
+        shooting = int.Parse(skillDict["shooting"]),
+        tackling = int.Parse(skillDict["tackling"]),
+        saving = int.Parse(skillDict["saving"]),
+        agility = int.Parse(skillDict["agility"]),
+        strength = int.Parse(skillDict["strength"]),
+        penaltyTaking = int.Parse(skillDict["penalty_taking"]),
+        jumping = int.Parse(skillDict["jumping"])
+    };
+
+    return skill;
+}
+
     public class PlayerJsonData
 {
     public string name;
     public string position;
     public string rating;
-    public PlayerListManager.Skill skill;
+    public Dictionary<string, string> skill;
     public Vector2 currentPos;
     public int fitness;
     public bool injured;

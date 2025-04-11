@@ -84,27 +84,6 @@ public class MatchRequest
         };
     }
 
-private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(List<PlayerListManager.PlayerData> playerDataList)
-{
-    List<PlayerSelectionManager.PlayerJsonData> jsonList = new List<PlayerSelectionManager.PlayerJsonData>();
-
-    foreach (var player in playerDataList)
-    {
-        jsonList.Add(new PlayerSelectionManager.PlayerJsonData
-        {
-            name = $"{player.player.firstname} {player.player.lastname}",
-            position = player.position,
-            rating = CalculateAverageSkill(player.skill).ToString(),
-            skill = player.skill,
-            currentPos = player.currentPos,
-            fitness = 100,
-            injured = false
-        });
-    }
-
-    return jsonList;
-}
-
 private static int CalculateAverageSkill(PlayerListManager.Skill skill)
 {
     int total = skill.passing +
@@ -118,6 +97,40 @@ private static int CalculateAverageSkill(PlayerListManager.Skill skill)
 
     return Mathf.RoundToInt((float)total / 8);
 }
+
+private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(List<PlayerListManager.PlayerData> playerDataList)
+{
+    List<PlayerSelectionManager.PlayerJsonData> jsonList = new List<PlayerSelectionManager.PlayerJsonData>();
+
+    foreach (var player in playerDataList)
+    {
+        var skillDict = new Dictionary<string, string>
+        {
+            { "passing", player.skill.passing.ToString() },
+            { "shooting", player.skill.shooting.ToString() },
+            { "tackling", player.skill.tackling.ToString() },
+            { "saving", player.skill.saving.ToString() },
+            { "agility", player.skill.agility.ToString() },
+            { "strength", player.skill.strength.ToString() },
+            { "penalty_taking", player.skill.penaltyTaking.ToString() },
+            { "jumping", player.skill.jumping.ToString() }
+        };
+
+        jsonList.Add(new PlayerSelectionManager.PlayerJsonData
+        {
+            name = $"{player.player.firstname} {player.player.lastname}",
+            position = player.position,
+            rating = CalculateAverageSkill(player.skill).ToString(),
+            skill = skillDict,
+            currentPos = player.currentPos,
+            fitness = 100,
+            injured = false
+        });
+    }
+
+    return jsonList;
+}
+
 }
 
 [System.Serializable]
