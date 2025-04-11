@@ -246,6 +246,9 @@ skill = new Skill
 
                             if (appearances > 0)
                             {
+                                string json = JsonConvert.SerializeObject(playerData.player);
+                                playerData.CalculateSkillsFromJson(json);
+
                                 allPlayers.Add(playerData);
                             }
                     }
