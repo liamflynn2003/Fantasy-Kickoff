@@ -19,6 +19,11 @@ public class PlayerListManager : MonoBehaviour
     public Transform contentParent;
     public GameObject playerListPrefab;
     public GameObject loadingPanel;
+    public GameObject DatabaseScreen;
+    public GameObject scrollView;
+
+    private Transform teamOnePanel;
+    private Transform teamTwoPanel;
 
     // API Configuration
     private string apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
@@ -148,6 +153,9 @@ skill = new Skill
     {
         localDataManager = GetComponent<LocalDataManager>();
         playerCache = localDataManager.LoadCache();
+
+        teamOnePanel = GameObject.Find("TeamOnePanel").transform;
+        teamTwoPanel = GameObject.Find("TeamTwoPanel").transform;
 
         if (teamDropdown != null)
         {
@@ -320,13 +328,14 @@ skill = new Skill
             {
                 toggle.onValueChanged.AddListener((isOn) =>
                 {
-                    if (isOn)
-                {
-                Debug.Log("Player Item clicked!");
-                OnPlayerItemClicked(playerData);
-            }
-        });
-    }   
+                    if (isOn && !DatabaseScreen.activeInHierarchy)
+                    {
+                    Debug.Log("Player Item clicked!");
+                    OnPlayerItemClicked(playerData);
+                    scrollView.SetActive(false);
+                    }
+                });
+            }   
 
             RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
             rectTransform.anchoredPosition = new Vector2(93, yOffset);
@@ -369,6 +378,8 @@ skill = new Skill
     // Assign the player data to the correct team and position
     selectionManager.AssignPlayer(positionIndex, playerData, selectionContext.isTeamOne);
 
+    // Update UI
+    UpdatePlayerButtonUI(selectionContext, playerData, positionIndex);
     // Serialize the entire player data to JSON string for logging
     string playerJson = JsonConvert.SerializeObject(playerData);
 
@@ -376,6 +387,31 @@ skill = new Skill
     Debug.Log($"Assigned player {playerData.player.firstname} {playerData.player.lastname} to team {(selectionContext.isTeamOne ? "One" : "Two")} at position {positionIndex}. Player Data: {playerJson}");
 
     }
+
+    // Update UI
+private void UpdatePlayerButtonUI(PlayerSelectionContext selectionContext, PlayerData playerData, int positionIndex)
+{
+    Transform teamPanel = selectionContext.isTeamOne ? teamOnePanel : teamTwoPanel;
+
+    // Find the specific player button by name
+    Transform playerButtonTransform = teamPanel.Find($"Player_{positionIndex}");
+    if (playerButtonTransform == null)
+    {
+        Debug.LogError($"Player button for position {positionIndex} not found in {(selectionContext.isTeamOne ? "TeamOnePanel" : "TeamTwoPanel")}.");
+        return;
+    }
+
+    // Update the player's name in the button
+    TMP_Text nameText = playerButtonTransform.Find("PlayerName").GetComponent<TMP_Text>();
+    if (nameText != null)
+    {
+        nameText.text = playerData.player.lastname;
+    }
+    else
+    {
+        Debug.LogError($"PlayerName TMP_Text component not found in Player_{positionIndex}.");
+    }
+}
 
     // ============================
     // Image Loading
@@ -398,6 +434,7 @@ skill = new Skill
             yield return LoadImageFromUrl(placeholderUrl, playerImage);
         }
     }
+
 
     private IEnumerator LoadImageFromUrl(string url, Image playerImage)
     {
