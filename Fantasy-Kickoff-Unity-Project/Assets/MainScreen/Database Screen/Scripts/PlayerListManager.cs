@@ -154,8 +154,10 @@ skill = new Skill
         localDataManager = GetComponent<LocalDataManager>();
         playerCache = localDataManager.LoadCache();
 
-        teamOnePanel = GameObject.Find("TeamOnePanel").transform;
-        teamTwoPanel = GameObject.Find("TeamTwoPanel").transform;
+        if(!DatabaseScreen.activeInHierarchy){
+            teamOnePanel = GameObject.Find("TeamOnePanel").transform;
+            teamTwoPanel = GameObject.Find("TeamTwoPanel").transform;
+        }
 
         if (teamDropdown != null)
         {

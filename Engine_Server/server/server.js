@@ -33,11 +33,31 @@ app.post('/simulate', async (req, res) => {
       let iterationResult = await engine.playIteration(matchDetails, playerOverIterations, iterationCount + 1);
       matchDetails = iterationResult.matchDetails;
 
+      // Add player positions for this iteration
+      playerOverIterations.kickOffTeam.forEach((player, index) => {
+        player.positions.push({
+          iteration: iterationCount + 1,
+          currentPos: {
+            x: matchDetails.kickOffTeam.players[index].currentPOS[0],
+            y: matchDetails.kickOffTeam.players[index].currentPOS[1]
+          }
+        });
+      });
+
+      playerOverIterations.secondTeam.forEach((player, index) => {
+        player.positions.push({
+          iteration: iterationCount + 1,
+          currentPos: {
+            x: matchDetails.secondTeam.players[index].currentPOS[0],
+            y: matchDetails.secondTeam.players[index].currentPOS[1]
+          }
+        });
+      });
+
       // Add the iteration data
       allIterations.push({
         iteration: iterationCount + 1,
-        startPositions: iterationResult.startPositions,
-        endPositions: iterationResult.endPositions,
+        positions: iterationResult.startPositions.players,
         iterationLog: matchDetails.iterationLog,
       });
 
@@ -59,7 +79,7 @@ app.post('/simulate', async (req, res) => {
       team2Goals: matchDetails.secondTeamStatistics.goals,
     };
 
-    // Send back the final result with player positions for each iteration and the score
+    // Send back the final result with player positions for each iteration, the score, and iteration logs
     res.json({
       matchDetails: matchDetails,
       totalIterations: iterationCount,

@@ -20,7 +20,8 @@ public class MatchDataManager : MonoBehaviour
         }
 
         MatchRequest matchRequest = new MatchRequest(teamOne, teamTwo);
-
+        Debug.Log(matchRequest.ToString());
+    /*
         string jsonData = JsonUtility.ToJson(matchRequest);
 
         if (string.IsNullOrEmpty(jsonData))
@@ -30,10 +31,12 @@ public class MatchDataManager : MonoBehaviour
         }
 
         StartCoroutine(PostMatchData(jsonData));
+        */
     }
 
     private IEnumerator PostMatchData(string json)
     {
+        Debug.Log("Sending JSON data: " + json);
         UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
         byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(jsonToSend);

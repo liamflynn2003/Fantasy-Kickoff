@@ -2867,7 +2867,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2095181635694683290, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
       propertyPath: m_Name
-      value: PlayerScrollView
+      value: SPPlayerScrollView
       objectReference: {fileID: 0}
     - target: {fileID: 2095181635694683290, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
       propertyPath: m_IsActive
@@ -4154,7 +4154,7 @@ MonoBehaviour:
   playerListPrefab: {fileID: 2530622260324694048, guid: 5e3e6a2fa4d0b5743a6366416bf5967f, type: 3}
   loadingPanel: {fileID: 4732731637887729989, guid: 593305a1fdac6fe4e88e8b132b7e1dea, type: 3}
   DatabaseScreen: {fileID: 1796163257}
-  scrollView: {fileID: 0}
+  scrollView: {fileID: 2095181635313527120}
 --- !u!114 &769785096
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11602,7 +11602,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2095181635694683290, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
       propertyPath: m_Name
-      value: Scroll View
+      value: DBPlayerScrollView
       objectReference: {fileID: 0}
     - target: {fileID: 2095181636275403631, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
       propertyPath: m_AnchorMax.x
@@ -11618,6 +11618,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
+--- !u!1 &2095181635313527120 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2095181635694683290, guid: f608fcb40b8e4ae47be3f00b855a5d46, type: 3}
+  m_PrefabInstance: {fileID: 2095181635313527119}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &2530622260638428079
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11726,6 +11731,14 @@ PrefabInstance:
       propertyPath: playerScrollView
       value: 
       objectReference: {fileID: 1190280473}
+    - target: {fileID: 2801952825534656550, guid: c4ea0085342cc0d4c870fa4c98b541c9, type: 3}
+      propertyPath: m_overflowMode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2801952825534656550, guid: c4ea0085342cc0d4c870fa4c98b541c9, type: 3}
+      propertyPath: m_enableWordWrapping
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2801952825894581964, guid: c4ea0085342cc0d4c870fa4c98b541c9, type: 3}
       propertyPath: m_Name
       value: Player_0
