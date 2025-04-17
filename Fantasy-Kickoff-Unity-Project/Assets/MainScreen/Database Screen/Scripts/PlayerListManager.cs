@@ -54,8 +54,9 @@ public class PlayerListManager : MonoBehaviour
         public int rating;
 
         [JsonIgnore]
-        public Vector2 currentPos;
+        public Vector2 currentPOS;
         public int fitness;
+        public int id;
         public bool injured;
 
         public void CalculateSkillsFromJson(string json)
@@ -67,19 +68,60 @@ public class PlayerListManager : MonoBehaviour
 
                 if (statistics != null && statistics.Count > 0)
                 {
-                    var stats = statistics[0];
-skill = new Skill
-{
-    passing = Mathf.Clamp((stats.passes?.total ?? 0) + (stats.passes?.key ?? 0) * 2, 0, 100),
-    shooting = Mathf.Clamp((stats.goals?.total ?? 0) * 10 + (stats.shots?.on ?? 0) * 2, 0, 100),
-    tackling = Mathf.Clamp((stats.tackles?.total ?? 0) * 2 + (stats.duels?.won ?? 0), 0, 100),
-    saving = Mathf.Clamp((stats.goals?.saves ?? 0) * 10, 0, 100),
-    agility = Mathf.Clamp((stats.dribbles?.success ?? 0) * 2 + (stats.fouls?.drawn ?? 0), 0, 100),
-    strength = Mathf.Clamp((stats.duels?.total ?? 0) + (stats.fouls?.committed ?? 0), 0, 100),
-    penaltyTaking = Mathf.Clamp((stats.penalty?.scored ?? 0) * 10 - (stats.penalty?.missed ?? 0) * 5, 0, 100),
-    jumping = Mathf.Clamp(Convert.ToInt32((player.height?.Replace(" cm", "") ?? "0")) / 2, 0, 100)
-};
+var stats = statistics[0];
+float minutes = stats.games?.appearences > 0 ? (stats.games.appearences ?? 0) * 90f : 1f; // fallback to 1 to avoid div by 0
 
+float passTotal = stats.passes?.total ?? 0;
+float keyPasses = stats.passes?.key ?? 0;
+float passScore = passTotal > 0 ? (keyPasses / passTotal) * 100f : 0;
+
+float shotsTotal = stats.shots?.total ?? 0;
+float shotsOnTarget = stats.shots?.on ?? 0;
+float goals = stats.goals?.total ?? 0;
+float shotAccuracy = shotsTotal > 0 ? (shotsOnTarget / shotsTotal) * 100f : 0;
+float conversion = shotsTotal > 0 ? (goals / shotsTotal) * 100f : 0;
+float shootingScore = (shotAccuracy * 0.6f + conversion * 0.4f);
+
+float tackles = stats.tackles?.total ?? 0;
+float interceptions = stats.tackles?.interceptions ?? 0;
+float duelsWon = stats.duels?.won ?? 0;
+float duelsTotal = stats.duels?.total ?? 0;
+float duelWinRate = duelsTotal > 0 ? (duelsWon / duelsTotal) * 100f : 0;
+float tacklingScore = (tackles + interceptions) * 2 + duelWinRate * 0.5f;
+
+float saves = stats.goals?.saves ?? 0;
+float conceded = stats.goals?.conceded ?? 0;
+float saveRate = (saves + conceded) > 0 ? (saves / (saves + conceded)) * 100f : 0;
+float savingScore = saveRate;
+
+float dribbleAttempts = stats.dribbles?.attempts ?? 0;
+float dribbleSuccess = stats.dribbles?.success ?? 0;
+float dribbleRate = dribbleAttempts > 0 ? (dribbleSuccess / dribbleAttempts) * 100f : 0;
+float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
+
+                float foulsCommitted = stats.fouls?.committed ?? 0;
+                float strengthScore = duelWinRate - foulsCommitted;
+
+                float pensScored = stats.penalty?.scored ?? 0;
+                float pensMissed = stats.penalty?.missed ?? 0;
+                float totalPens = pensScored + pensMissed;
+                float penaltyRate = totalPens > 0 ? (pensScored / totalPens) * 100f : 0;
+                float penaltyScore = penaltyRate;
+
+                float height = Convert.ToInt32(player.height?.Replace(" cm", "") ?? "0");
+                float jumpingScore = (height - 150f) * 0.75f;
+
+                skill = new Skill
+                {
+                    passing = NormalizeToSkillRange(passScore),
+                    shooting = NormalizeToSkillRange(shootingScore),
+                    tackling = NormalizeToSkillRange(tacklingScore),
+                    saving = NormalizeToSkillRange(savingScore),
+                    agility = NormalizeToSkillRange(agilityScore),
+                    strength = NormalizeToSkillRange(strengthScore),
+                    penaltyTaking = NormalizeToSkillRange(penaltyScore),
+                    jumping = NormalizeToSkillRange(jumpingScore)
+                };
 
                 }
                 else
@@ -91,6 +133,12 @@ skill = new Skill
             {
                 Debug.LogError($"Error calculating skills from JSON: {ex.Message}");
             }
+        }
+
+        private int NormalizeToSkillRange(float value)
+        {
+            value = Mathf.Clamp(value, 0f, 100f);
+            return Mathf.Clamp(Mathf.RoundToInt((value / 100f) * 98f + 1f), 1, 99);
         }
     }
 
@@ -132,10 +180,10 @@ skill = new Skill
     public class GameStatistics { public int? appearences; }
     public class PassStatistics { public int? total; public int? key; }
     public class ShotStatistics { public int? total; public int? on; }
-    public class GoalStatistics { public int? total; public int? saves; }
-    public class TackleStatistics { public int? total; }
+    public class GoalStatistics { public int? total; public int? saves; public int? conceded; } 
+    public class TackleStatistics { public int? total; public int? interceptions; }
     public class DuelStatistics { public int? total; public int? won; }
-    public class DribbleStatistics { public int? success; }
+    public class DribbleStatistics { public int? success; public int? attempts; }
     public class FoulStatistics { public int? drawn; public int? committed; }
     public class PenaltyStatistics { public int? scored; public int? missed; }
 
@@ -167,7 +215,8 @@ skill = new Skill
             SetInitialTeamDropdownValue();
         }
 
-        OnLeagueChanged(); // Trigger initial league change
+        OnLeagueChanged();
+        OnTeamSelected();
     }
 
     private void OnApplicationQuit()
@@ -291,6 +340,16 @@ skill = new Skill
 
     public void PopulateScrollView(List<PlayerData> players)
     {
+        foreach (var player in players)
+        {
+            if (player.skill == null)
+            {
+                string json = JsonConvert.SerializeObject(player.player);
+                player.CalculateSkillsFromJson(json);
+                Debug.Log($"Recalculated skills for player: {player.player.firstname} {player.player.lastname}");
+            }
+        }
+        
         foreach (Transform child in contentParent)
         {
             Destroy(child.gameObject);

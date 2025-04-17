@@ -17,14 +17,14 @@ public class PlayerSelectionManager : MonoBehaviour
         if (isTeamOne)
         {   
             player.position = CalculatePosition(positionIndex);
-            player.currentPos= CalculateCurrentPos(positionIndex, isTeamOne);
+            player.currentPOS= CalculateCurrentPos(positionIndex, isTeamOne);
             selectedTeamOne[positionIndex] = player;
             UpdateUI(teamOnePlayers[positionIndex], player);
         }
         else
         {
             player.position = CalculatePosition(positionIndex);
-            player.currentPos=CalculateCurrentPos(positionIndex, isTeamOne);
+            player.currentPOS=CalculateCurrentPos(positionIndex, isTeamOne);
             selectedTeamTwo[positionIndex] = player;
             UpdateUI(teamTwoPlayers[positionIndex], player);
         }
@@ -121,7 +121,7 @@ public class PlayerSelectionManager : MonoBehaviour
                 position = playerJson.position,
                 rating = 50,
                 skill = ConvertToSkill(playerJson.skill),
-                currentPos = new Vector2(playerJson.currentPos[0], playerJson.currentPos[1]),
+                currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
                 fitness = playerJson.fitness,
                 injured = playerJson.injured
             };
@@ -153,9 +153,61 @@ public class PlayerSelectionManager : MonoBehaviour
     public string position;
     public string rating;
     public Dictionary<string, string> skill;
-    public Vector2 currentPos;
+    
+    public float[] currentPOS;
+    public float[] originPOS;
+    public float[] intentPOS;
+
     public int fitness;
     public bool injured;
+    public int playerID;
+    public string action;
+    public bool offside;
+    public bool hasBall;
+    public PlayerStats stats;
+}
+
+[System.Serializable]
+public class PlayerStats
+{
+    public int goals = 0;
+    public ShotStats shots = new ShotStats();
+    public CardStats cards = new CardStats();
+    public PassStats passes = new PassStats();
+    public TackleStats tackles = new TackleStats();
+    public int saves = 0;
+}
+
+[System.Serializable]
+public class ShotStats
+{
+    public int total = 0;
+    public int on = 0;
+    public int off = 0;
+}
+
+[System.Serializable]
+public class CardStats
+{
+    public int yellow = 0;
+    public int red = 0;
+}
+
+[System.Serializable]
+public class PassStats
+{
+    public int total = 0;
+    public int on = 0;
+    public int off = 0;
+}
+
+[System.Serializable]
+public class TackleStats
+{
+    public int total = 0;
+    public int on = 0;
+    public int off = 0;
+    public int fouls = 0;
 }
 }
 

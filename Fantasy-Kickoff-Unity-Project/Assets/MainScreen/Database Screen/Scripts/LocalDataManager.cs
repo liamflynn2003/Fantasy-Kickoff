@@ -84,6 +84,13 @@ public class LocalDataManager : MonoBehaviour
             {
                 string json = File.ReadAllText(cacheFilePath);
                 var playerCache = JsonConvert.DeserializeObject<Dictionary<int, List<PlayerListManager.PlayerData>>>(json);
+
+                if (playerCache == null || playerCache.Count == 0)
+                {
+                    Debug.LogWarning("Cache file is empty or invalid.");
+                    return new Dictionary<int, List<PlayerListManager.PlayerData>>();
+                }
+
                 Debug.Log("Cache loaded.");
                 return playerCache;
             }
