@@ -57,7 +57,7 @@ public class PlayerListManager : MonoBehaviour
         public int rating;
 
         [JsonIgnore]
-        public Vector2 currentPOS;
+        public Vector2 startPOS;
         public int fitness;
         public int id;
         public bool injured;
