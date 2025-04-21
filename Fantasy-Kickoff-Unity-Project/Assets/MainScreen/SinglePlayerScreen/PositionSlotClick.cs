@@ -39,15 +39,15 @@ public class PositionSlotClick : MonoBehaviour
         }
 
         // Find the PlayerSelectionContext and set the context for this position
-        PlayerSelectionContext context = FindObjectOfType<PlayerSelectionContext>();
-        if (context != null)
-        {
-            context.SetContext(positionIndex, isTeamOne);
-            Debug.Log($"Context set to index {positionIndex}, team: {(isTeamOne ? "Team 1" : "Team 2")}");
-        }
-        else
-        {
-            Debug.LogWarning("PlayerSelectionContext not found.");
-        }
+        PlayerSelectionContext context = PlayerSelectionContext.Instance;
+if (context != null)
+{
+    context.SetContext(positionIndex, isTeamOne);
+    Debug.Log($"Context set to index {positionIndex}, team: {(isTeamOne ? "Team 1" : "Team 2")}");
+}
+else
+{
+    Debug.LogWarning("PlayerSelectionContext instance not found.");
+}
     }
 }

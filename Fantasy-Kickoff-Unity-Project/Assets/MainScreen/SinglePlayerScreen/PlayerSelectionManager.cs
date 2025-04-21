@@ -154,9 +154,9 @@ public class PlayerSelectionManager : MonoBehaviour
     public string rating;
     public Dictionary<string, string> skill;
     
-    public float[] currentPOS;
-    public float[] originPOS;
-    public float[] intentPOS;
+    public int[] currentPOS;
+    public int[] originPOS;
+    public int[] intentPOS;
 
     public int fitness;
     public bool injured;

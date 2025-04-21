@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using System;
+using Newtonsoft.Json;
 
 public class MatchDataManager : MonoBehaviour
 {
@@ -22,8 +23,11 @@ public class MatchDataManager : MonoBehaviour
 
         MatchRequest matchRequest = new MatchRequest(teamOne, teamTwo);
         Debug.Log(matchRequest.ToString());
-        string jsonData = JsonUtility.ToJson(matchRequest);
+        string jsonData = JsonConvert.SerializeObject(matchRequest, Formatting.Indented);
+        Debug.Log($"Serialized JSON: {jsonData}");
+        Debug.Log($"Final JSON being sent: {jsonData}");
 
+        WriteJsonToFile(jsonData);
         if (string.IsNullOrEmpty(jsonData))
         {
             Debug.LogError("Failed to serialize MatchRequest to JSON.");
@@ -34,6 +38,12 @@ public class MatchDataManager : MonoBehaviour
 
     }
 
+private void WriteJsonToFile(string jsonData)
+{
+    string path = Application.persistentDataPath + "/matchRequest.json";
+    System.IO.File.WriteAllText(path, jsonData);
+    Debug.Log($"JSON written to file: {path}");
+}
     private IEnumerator PostMatchData(string json)
     {
         Debug.Log("Sending JSON data: " + json);
@@ -86,13 +96,20 @@ public class MatchRequest
         return DateTime.Now.Ticks; // Generate a unique match ID based on the current timestamp
     }
 
+    
     private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(List<PlayerListManager.PlayerData> playerDataList)
-    {
-        List<PlayerSelectionManager.PlayerJsonData> jsonList = new List<PlayerSelectionManager.PlayerJsonData>();
+{
+    List<PlayerSelectionManager.PlayerJsonData> jsonList = new List<PlayerSelectionManager.PlayerJsonData>();
 
-        foreach (var player in playerDataList)
+    foreach (var player in playerDataList)
+    {
+        Debug.Log($"Converting player: {player.player.firstname} {player.player.lastname}, Position: {player.position}");
+        jsonList.Add(new PlayerSelectionManager.PlayerJsonData
         {
-            var skillDict = new Dictionary<string, string>
+            name = $"{player.player.firstname} {player.player.lastname}",
+            position = player.position,
+            rating = CalculateAverageSkill(player.skill).ToString(),
+            skill = new Dictionary<string, string>
             {
                 { "passing", player.skill.passing.ToString() },
                 { "shooting", player.skill.shooting.ToString() },
@@ -102,29 +119,22 @@ public class MatchRequest
                 { "strength", player.skill.strength.ToString() },
                 { "penalty_taking", player.skill.penaltyTaking.ToString() },
                 { "jumping", player.skill.jumping.ToString() }
-            };
-
-            jsonList.Add(new PlayerSelectionManager.PlayerJsonData
-            {
-                name = $"{player.player.firstname} {player.player.lastname}",
-                position = player.position,
-                rating = CalculateAverageSkill(player.skill).ToString(),
-                skill = skillDict,
-                currentPOS = new float[] { player.currentPOS.x, player.currentPOS.y },
-                fitness = 99,
-                injured = false,
-                playerID = player.id,
-                originPOS = new float[] { player.currentPOS.x, player.currentPOS.y + 25 },
-                intentPOS = new float[] { player.currentPOS.x, player.currentPOS.y - 18 },
-                action = "none",
-                offside = false,
-                hasBall = false,
-                stats = new PlayerSelectionManager.PlayerStats()
-            });
-        }
-
-        return jsonList;
+            },
+            currentPOS = new int[] { Mathf.RoundToInt(player.currentPOS.x), Mathf.RoundToInt(player.currentPOS.y) },
+            originPOS = new int[] { Mathf.RoundToInt(player.currentPOS.x), Mathf.RoundToInt(player.currentPOS.y) },
+            intentPOS = new int[] { Mathf.RoundToInt(player.currentPOS.x), Mathf.RoundToInt(player.currentPOS.y) },
+            fitness = 99,
+            injured = false,
+            playerID = player.id,
+            action = "none",
+            offside = false,
+            hasBall = false,
+            stats = new PlayerSelectionManager.PlayerStats()
+        });
     }
+
+    return jsonList;
+}
 
     private static int CalculateAverageSkill(PlayerListManager.Skill skill)
     {
@@ -156,12 +166,12 @@ public class PlayerJsonData
     public string position;
     public string rating;
     public Dictionary<string, string> skill;
-    public float[] currentPOS;
+    public int[] currentPOS;
     public float fitness;
     public bool injured;
     public long playerID;
-    public float[] originPOS;
-    public float[] intentPOS;
+    public int[] originPOS;
+    public int[] intentPOS;
     public string action;
     public bool offside;
     public bool hasBall;

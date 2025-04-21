@@ -411,7 +411,7 @@ private IEnumerator ImageQueueWorker()
             if (image != null && image.gameObject.activeInHierarchy)
                 yield return LoadImageFromUrl(url, image);
         }
-        yield return new WaitForSeconds(0.1f); // 10fps fetch max
+        yield return new WaitForSeconds(0.0001f); // 10fps fetch max
     }
 }
 
@@ -447,6 +447,21 @@ public void PopulateScrollView(List<PlayerData> players)
         GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
         TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
         nameText.text = fullPlayerName;
+
+        Toggle toggle = playerListObject.GetComponent<Toggle>();
+        if (toggle != null)
+{
+    var dataCopy = playerData; // capture properly in closure
+    toggle.onValueChanged.AddListener((isOn) =>
+    {
+        if (isOn && !DatabaseScreen.activeInHierarchy)
+        {
+            Debug.Log("Player Item clicked!");
+            OnPlayerItemClicked(dataCopy);
+            scrollView.SetActive(false);
+        }
+    });
+}
 
         Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
         if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
