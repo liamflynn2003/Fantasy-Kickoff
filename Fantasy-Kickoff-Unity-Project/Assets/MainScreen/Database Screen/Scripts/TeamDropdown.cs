@@ -199,7 +199,7 @@ private IEnumerator LoadLogo(string url, TMP_Dropdown.OptionData option)
     if (teamDropdown.options.Count == 0)
     {
         Debug.LogError("Team dropdown is empty. Cannot get selected team ID.");
-        return 0;
+        return -1;
     }
 
     string selectedTeam = teamDropdown.options[teamDropdown.value].text;
