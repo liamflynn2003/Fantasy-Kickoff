@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System;
 using Newtonsoft.Json;
+using System.IO;
 
 public class MatchDataManager : MonoBehaviour
 {
@@ -49,7 +50,14 @@ public void SimulateMatch()
 
         if (request.result == UnityWebRequest.Result.Success)
         {
-            Debug.Log("Match simulation started successfully: " + request.downloadHandler.text);
+            Debug.Log("Match simulation started successfully.");
+            string responseText = request.downloadHandler.text;
+
+            // Write the response to a JSON file
+            string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
+            File.WriteAllText(filePath, responseText);
+
+            Debug.Log($"Match simulation result saved to: {filePath}");
         }
         else
         {
@@ -70,13 +78,13 @@ public class MatchRequest
         team1 = new TeamData
         {
             name = "TeamOne",
-            rating = 88,
+            rating = CalculateTeamRating(teamOneDict.Values),
             players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamOneDict.Values))
         };
         team2 = new TeamData
         {
             name = "TeamTwo",
-            rating = 90,
+            rating = CalculateTeamRating(teamTwoDict.Values),
             players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamTwoDict.Values))
         };
         pitchDetails = new PitchDetails
@@ -85,6 +93,20 @@ public class MatchRequest
             pitchHeight = 1050,
             goalWidth = 90
         };
+    }
+
+    private static int CalculateTeamRating(IEnumerable<PlayerListManager.PlayerData> players)
+    {
+        int totalRating = 0;
+        int playerCount = 0;
+
+        foreach (var player in players)
+        {
+            totalRating += CalculateAverageSkill(player.skill);
+            playerCount++;
+        }
+
+        return playerCount > 0 ? Mathf.RoundToInt((float)totalRating / playerCount) : 0;
     }
 
     private static List<PlayerSelectionManager.PlayerJsonData> ConvertToJsonData(List<PlayerListManager.PlayerData> playerDataList)

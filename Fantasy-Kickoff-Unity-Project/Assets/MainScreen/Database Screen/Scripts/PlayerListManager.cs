@@ -71,17 +71,34 @@ public class PlayerListManager : MonoBehaviour
 var stats = statistics[0];
 float minutes = stats.games?.appearences > 0 ? (stats.games.appearences ?? 0) * 90f : 1f; // fallback to 1 to avoid div by 0
 
+// Calculate passing stat
 float passTotal = stats.passes?.total ?? 0;
 float keyPasses = stats.passes?.key ?? 0;
-float passScore = passTotal > 0 ? (keyPasses / passTotal) * 100f : 0;
+float passAccuracy = stats.passes?.accuracy ?? 0; // Default to 0 if null
+// Base passing score starts at 50
+float passScore = 50f;
+// Add 1 for each key pass
+passScore += keyPasses;
+// Add 2 for every 5% in pass accuracy
+passScore += Mathf.Floor(passAccuracy / 5f) * 2f;
 
+//Calculate shooting stat
 float shotsTotal = stats.shots?.total ?? 0;
 float shotsOnTarget = stats.shots?.on ?? 0;
 float goals = stats.goals?.total ?? 0;
+
 float shotAccuracy = shotsTotal > 0 ? (shotsOnTarget / shotsTotal) * 100f : 0;
 float conversion = shotsTotal > 0 ? (goals / shotsTotal) * 100f : 0;
-float shootingScore = (shotAccuracy * 0.6f + conversion * 0.4f);
+float rawScore = (shotAccuracy * 0.3f + conversion * 0.7f) * 2;
 
+float sampleWeight = Mathf.Log10(shotsTotal + 1);
+float weightedScore = rawScore * Mathf.Clamp01(sampleWeight);
+float goalBonus = goals >= 1 ? Mathf.Floor(goals / 5f) * 5f : 0f;
+
+// Final score with bonus
+float shootingScore = Mathf.Clamp(weightedScore + goalBonus, 0f, 100f);
+
+// Calculate tackling skill
 float tackles = stats.tackles?.total ?? 0;
 float interceptions = stats.tackles?.interceptions ?? 0;
 float duelsWon = stats.duels?.won ?? 0;
@@ -178,7 +195,7 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
     }
 
     public class GameStatistics { public int? appearences; }
-    public class PassStatistics { public int? total; public int? key; }
+    public class PassStatistics { public int? total; public int? key; public int? accuracy; }
     public class ShotStatistics { public int? total; public int? on; }
     public class GoalStatistics { public int? total; public int? saves; public int? conceded; } 
     public class TackleStatistics { public int? total; public int? interceptions; }
@@ -497,6 +514,13 @@ private void UpdatePlayerButtonUI(PlayerSelectionContext selectionContext, Playe
             playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             PlayerImageCache.Instance.CacheImage(url, playerImage.sprite);
         }
+    }
+
+    public void ClearPlayerCache()
+    {
+        playerCache.Clear();
+        localDataManager.SaveCache(playerCache); // Save the cleared cache to persist the changes
+        Debug.Log("Player cache cleared.");
     }
 }
 

@@ -16,7 +16,7 @@ app.post('/simulate', async (req, res) => {
     let matchDetails = await engine.initiateGame(team1, team2, pitchDetails);
     
     let iterationCount = 0;
-    let maxIterations = 50;
+    let maxIterations = 10000;
 
     // Initialize playerOverIterations
     let playerOverIterations = {
@@ -67,8 +67,8 @@ app.post('/simulate', async (req, res) => {
       console.log(`Iteration ${iterationCount}:`);
       console.log(matchDetails.iterationLog);
 
-      // Check if halftime
-      if (matchDetails.half === 1 && iterationCount < maxIterations) {
+      // Switch to the second half at iteration 5001
+      if (iterationCount === 5001 && matchDetails.half === 1) {
         matchDetails = await engine.startSecondHalf(matchDetails);
       }
     }
