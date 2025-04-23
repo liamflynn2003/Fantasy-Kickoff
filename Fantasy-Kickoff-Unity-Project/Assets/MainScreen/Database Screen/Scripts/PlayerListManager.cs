@@ -21,9 +21,6 @@ public class PlayerListManager : MonoBehaviour
     public GameObject loadingPanel;
     public GameObject DatabaseScreen;
     public GameObject scrollView;
-    private Sprite placeholderSprite;
-    private bool placeholderLoaded = false;
-
 
     private Transform teamOnePanel;
     private Transform teamTwoPanel;
@@ -57,7 +54,7 @@ public class PlayerListManager : MonoBehaviour
         public int rating;
 
         [JsonIgnore]
-        public Vector2 startPOS;
+        public Vector2 currentPOS;
         public int fitness;
         public int id;
         public bool injured;
@@ -202,7 +199,6 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
 
     private void Start()
     {
-        StartCoroutine(LoadPlaceholderImage());
         localDataManager = GetComponent<LocalDataManager>();
         playerCache = localDataManager.LoadCache();
 
@@ -213,46 +209,14 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
 
         if (teamDropdown != null)
         {
-        leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
-        teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
+            leagueDropdown.onValueChanged.AddListener(delegate { OnLeagueChanged(); });
+            teamDropdown.onValueChanged.AddListener(delegate { OnTeamSelected(); });
 
-        SetInitialTeamDropdownValue();
-        StartCoroutine(WaitForDropdownToPopulateAndSelectTeam());
+            SetInitialTeamDropdownValue();
         }
 
-        StartImageQueue();
-        OnLeagueChanged();
-        
+        OnLeagueChanged(); // Trigger initial league change
     }
-    private IEnumerator LoadPlaceholderImage()
-{
-    if (placeholderLoaded) yield break;
-
-    UnityWebRequest request = UnityWebRequestTexture.GetTexture("https://media.api-sports.io/football/players/328089.png");
-    yield return request.SendWebRequest();
-
-    if (request.result == UnityWebRequest.Result.Success)
-    {
-        Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
-        placeholderSprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
-        placeholderLoaded = true;
-    }
-}
-
-
-    private IEnumerator WaitForDropdownToPopulateAndSelectTeam()
-{
-    if (!this.isActiveAndEnabled) yield break;
-    // Wait until the dropdown has options
-    while (teamDropdown.options.Count == 0)
-    {
-        Debug.Log("Waiting for team dropdown to populate...");
-        yield return null; // Wait for the next frame
-    }
-
-    Debug.Log("Team dropdown populated. Calling OnTeamSelected.");
-    OnTeamSelected(); // Call OnTeamSelected after the dropdown is populated
-}
 
     private void OnApplicationQuit()
     {
@@ -282,43 +246,22 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
     }
 
     public void OnTeamSelected()
-{
-    // Check if the team dropdown has any options
-    if (teamDropdown.options.Count == 0)
     {
-        Debug.LogError("Team dropdown is empty. Cannot select a team.");
-        return;
+        int teamId = FindObjectOfType<TeamDropdown>().GetSelectedTeamId();
+        if (teamId > 0)
+        {
+            if (playerCache.ContainsKey(teamId))
+            {
+                Debug.Log("Using cached data for team ID: " + teamId);
+                PopulateScrollView(playerCache[teamId]); // Display cached data
+            }
+            else
+            {
+                Debug.Log("Fetching data from API for team ID: " + teamId);
+                StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
+            }
+        }
     }
-
-    // Get the selected team ID
-    TeamDropdown teamDropdownComponent = FindObjectOfType<TeamDropdown>();
-    if (teamDropdownComponent == null)
-    {
-        Debug.LogError("TeamDropdown component not found.");
-        return;
-    }
-
-    int? selectedTeamId = teamDropdownComponent.GetSelectedTeamId();
-    if (selectedTeamId == null || selectedTeamId <= 0)
-    {
-        Debug.Log("No valid team selected yet. Skipping team load.");
-        return;
-    }
-
-    int teamId = selectedTeamId.Value;
-
-    // Check if the team ID is already cached or needs to fetch data
-    if (playerCache.ContainsKey(teamId))
-    {
-        Debug.Log("Using cached data for team ID: " + teamId);
-        PopulateScrollView(playerCache[teamId]); // Display cached data
-    }
-    else
-    {
-        Debug.Log("Fetching data from API for team ID: " + teamId);
-        StartCoroutine(FetchAllPlayers(teamId)); // Fetch fresh data from the API
-    }
-}
 
     // ============================
     // API Handling
@@ -393,92 +336,67 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
     // ============================
     // Scroll View Population
     // ============================
-private Queue<(string url, Image image)> imageQueue = new Queue<(string url, Image image)>();
 
-
-private void StartImageQueue()
-{
-    StartCoroutine(ImageQueueWorker());
-}
-
-private IEnumerator ImageQueueWorker()
-{
-    while (true)
+    public void PopulateScrollView(List<PlayerData> players)
     {
-        if (imageQueue.Count > 0)
+        foreach (Transform child in contentParent)
         {
-            var (url, image) = imageQueue.Dequeue();
-            if (image != null && image.gameObject.activeInHierarchy)
-                yield return LoadImageFromUrl(url, image);
-        }
-        yield return new WaitForSeconds(0.0001f); // 10fps fetch max
-    }
-}
-
-private List<Coroutine> activeCoroutines = new List<Coroutine>();
-
-public void PopulateScrollView(List<PlayerData> players)
-{
-    // Stop all active coroutines before clearing the scroll view
-    foreach (var coroutine in activeCoroutines)
-    {
-        StopCoroutine(coroutine);
-    }
-    activeCoroutines.Clear();
-
-    // Clear existing UI elements
-    foreach (Transform child in contentParent)
-    {
-        Destroy(child.gameObject);
-    }
-
-    float yOffset = -10f;
-    float itemHeight = 20f;
-    float spacing = 0f;
-
-    for (int i = 0; i < players.Count; i++)
-    {
-        var playerData = players[i];
-        if (playerData?.player == null) continue;
-
-        string fullPlayerName = $"{playerData.player.firstname} {playerData.player.lastname}";
-
-        // Create a new list item with the player's name and image
-        GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
-        TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
-        nameText.text = fullPlayerName;
-
-        Toggle toggle = playerListObject.GetComponent<Toggle>();
-        if (toggle != null)
-{
-    var dataCopy = playerData; // capture properly in closure
-    toggle.onValueChanged.AddListener((isOn) =>
-    {
-        if (isOn && !DatabaseScreen.activeInHierarchy)
-        {
-            Debug.Log("Player Item clicked!");
-            OnPlayerItemClicked(dataCopy);
-            scrollView.SetActive(false);
-        }
-    });
-}
-
-        Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
-        if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
-        {
-            imageQueue.Enqueue((playerData.player.photo, playerImage));
+            Destroy(child.gameObject);
         }
 
-        RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
-        rectTransform.anchoredPosition = new Vector2(93, yOffset);
+        float yOffset = -10f;
+        float itemHeight = 20f;
+        float spacing = 0f;
 
-        yOffset -= (itemHeight + spacing);
+        for (int i = 0; i < players.Count; i++)
+        {
+            var playerData = players[i];
+            if (playerData?.player == null) continue;
+
+            // Extract first name and last name
+            string[] firstNameParts = playerData.player.firstname.Split(' ');
+            string firstName = firstNameParts.Length > 0 ? firstNameParts[0] : string.Empty;
+
+            string[] lastNameParts = playerData.player.lastname.Split(' ');
+            string lastName = lastNameParts.Length > 0 ? lastNameParts[lastNameParts.Length - 1] : string.Empty;
+
+            string fullPlayerName = $"{firstName} {lastName}";
+
+            // Create a new list item with the player's name and image
+            GameObject playerListObject = Instantiate(playerListPrefab, contentParent);
+            TMP_Text nameText = playerListObject.transform.Find("PlayerName").GetComponent<TMP_Text>();
+            nameText.text = fullPlayerName;
+            Image playerImage = playerListObject.transform.Find("PlayerImage").GetComponent<Image>();
+
+            if (playerImage != null && !string.IsNullOrEmpty(playerData.player.photo))
+            {
+                StartCoroutine(LoadPlayerImage(playerData.player.photo, playerImage));
+            }
+
+            Toggle toggle = playerListObject.GetComponent<Toggle>();
+            if (toggle != null)
+            {
+                toggle.onValueChanged.AddListener((isOn) =>
+                {
+                    if (isOn && !DatabaseScreen.activeInHierarchy)
+                    {
+                    Debug.Log("Player Item clicked!");
+                    OnPlayerItemClicked(playerData);
+                    scrollView.SetActive(false);
+                    }
+                });
+            }   
+
+            RectTransform rectTransform = playerListObject.GetComponent<RectTransform>();
+            rectTransform.anchoredPosition = new Vector2(93, yOffset);
+
+            yOffset -= (itemHeight + spacing);
+        }
+
+        RectTransform contentRect = contentParent.GetComponent<RectTransform>();
+        contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
+        contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
     }
-
-    RectTransform contentRect = contentParent.GetComponent<RectTransform>();
-    contentRect.sizeDelta = new Vector2(contentRect.sizeDelta.x, Mathf.Abs(yOffset) + 20);
-    contentRect.anchoredPosition = new Vector2(contentRect.anchoredPosition.x, 0);
-}
 
     private void OnPlayerItemClicked(PlayerData playerData)
     {
@@ -549,75 +467,37 @@ private void UpdatePlayerButtonUI(PlayerSelectionContext selectionContext, Playe
     // Image Loading
     // ============================
 
-private IEnumerator LoadPlayerImage(string url, Image playerImage)
-{
-    if (playerImage == null || playerImage.gameObject == null)
+    private IEnumerator LoadPlayerImage(string url, Image playerImage)
     {
-        Debug.LogWarning("PlayerImage is null or destroyed. Skipping image loading.");
-        yield break;
-    }
-
-    Sprite cachedSprite = PlayerImageCache.Instance.GetImage(url);
-    if (cachedSprite != null)
-    {
-        if (playerImage != null)
+        Sprite cachedSprite = PlayerImageCache.Instance.GetImage(url);
+        if (cachedSprite != null)
         {
             playerImage.sprite = cachedSprite;
+            yield break;
         }
-        yield break;
-    }
 
-    // Retry logic with a maximum of 5 retries
-    int retryCount = 0;
-    bool imageLoaded = false;
-    while (retryCount < 5 && !imageLoaded)
-    {
         yield return LoadImageFromUrl(url, playerImage);
-        
-        if (playerImage.sprite != null)
+
+        if (playerImage.sprite == null)
         {
-            imageLoaded = true;
-        }
-        else
-        {
-            // Log the error and retry after a delay (0.5f seconds)
-            Debug.LogError($"Failed to load image from URL: {url}. Retrying... Attempt {retryCount + 1}/5.");
-            retryCount++;
-            yield return new WaitForSeconds(0.5f);  // Adding delay before retry
+            string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
+            yield return LoadImageFromUrl(placeholderUrl, playerImage);
         }
     }
 
-    if (!imageLoaded && placeholderSprite != null && playerImage != null)
-{
-    playerImage.sprite = placeholderSprite;
-}
 
-}
-
-private IEnumerator LoadImageFromUrl(string url, Image playerImage)
-{
-    UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
-    yield return request.SendWebRequest();
-
-    if (request.result == UnityWebRequest.Result.Success)
+    private IEnumerator LoadImageFromUrl(string url, Image playerImage)
     {
-        if (playerImage != null && playerImage.gameObject != null && playerImage.gameObject.activeInHierarchy)
+        UnityWebRequest request = UnityWebRequestTexture.GetTexture(url);
+        yield return request.SendWebRequest();
+
+        if (request.result == UnityWebRequest.Result.Success)
         {
             Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
             playerImage.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             PlayerImageCache.Instance.CacheImage(url, playerImage.sprite);
         }
-        else
-        {
-            Debug.LogWarning("PlayerImage is null or destroyed. Skipping sprite assignment.");
-        }
     }
-    else
-    {
-        Debug.LogError($"Failed to load image from URL: {url}. Error: {request.error}");
-    }
-}
-
 }
 
 // ============================

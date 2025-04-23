@@ -17,14 +17,14 @@ public class PlayerSelectionManager : MonoBehaviour
         if (isTeamOne)
         {   
             player.position = CalculatePosition(positionIndex);
-            player.startPOS= CalculateStartPos(positionIndex, isTeamOne);
+            player.currentPOS= CalculateStartPos(positionIndex, isTeamOne);
             selectedTeamOne[positionIndex] = player;
             UpdateUI(teamOnePlayers[positionIndex], player);
         }
         else
         {
             player.position = CalculatePosition(positionIndex);
-            player.startPOS=CalculateStartPos(positionIndex, isTeamOne);
+            player.currentPOS=CalculateStartPos(positionIndex, isTeamOne);
             selectedTeamTwo[positionIndex] = player;
             UpdateUI(teamTwoPlayers[positionIndex], player);
         }
@@ -121,7 +121,7 @@ public class PlayerSelectionManager : MonoBehaviour
                 position = playerJson.position,
                 rating = 50,
                 skill = ConvertToSkill(playerJson.skill),
-                startPOS = new Vector2(playerJson.startPOS[0], playerJson.startPOS[1]),
+                currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
                 fitness = playerJson.fitness,
                 injured = playerJson.injured
             };
@@ -154,7 +154,7 @@ public class PlayerSelectionManager : MonoBehaviour
     public string rating;
     public Dictionary<string, string> skill;
     
-    public int[] startPOS;
+    public int[] currentPOS;
 
     public int fitness;
     public bool injured;
