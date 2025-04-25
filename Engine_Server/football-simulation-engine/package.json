@@ -7,7 +7,7 @@
     "start": "node engine.js",
     "lint": "eslint .",
     "lint-fix": "eslint --fix .",
-    "test": "nyc --reporter=html mocha"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",

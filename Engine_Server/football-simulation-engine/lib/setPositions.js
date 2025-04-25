@@ -457,8 +457,6 @@ function setKickOffTeamGoalScored(matchDetails) {
   matchDetails.secondTeam.intent = `attack`
   matchDetails.kickOffTeam.intent = `defend`
   matchDetails.kickOffTeamStatistics.goals++
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setSecondTeamGoalScored(matchDetails) {
@@ -475,8 +473,6 @@ function setSecondTeamGoalScored(matchDetails) {
   matchDetails.kickOffTeam.intent = `attack`
   matchDetails.secondTeam.intent = `defend`
   matchDetails.secondTeamStatistics.goals++
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBallSpecificGoalScoreValue(matchDetails, conceedingTeam) {

@@ -117,7 +117,8 @@ float dribbleRate = dribbleAttempts > 0 ? (dribbleSuccess / dribbleAttempts) * 1
 float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
 
                 float foulsCommitted = stats.fouls?.committed ?? 0;
-                float strengthScore = duelWinRate - foulsCommitted;
+                float weight = (Convert.ToInt32(player.weight?.Replace(" kg", "") ?? "0")) * 0.5f;
+                float strengthScore = (duelWinRate - foulsCommitted) + weight;
 
                 float pensScored = stats.penalty?.scored ?? 0;
                 float pensMissed = stats.penalty?.missed ?? 0;
@@ -126,7 +127,7 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
                 float penaltyScore = penaltyRate;
 
                 float height = Convert.ToInt32(player.height?.Replace(" cm", "") ?? "0");
-                float jumpingScore = (height - 150f) * 0.75f;
+                float jumpingScore =  Mathf.Clamp(height, 0f, 300f);
 
                 skill = new Skill
                 {
@@ -137,7 +138,7 @@ float agilityScore = dribbleRate + (stats.fouls?.drawn ?? 0);
                     agility = NormalizeToSkillRange(agilityScore),
                     strength = NormalizeToSkillRange(strengthScore),
                     penaltyTaking = NormalizeToSkillRange(penaltyScore),
-                    jumping = NormalizeToSkillRange(jumpingScore)
+                    jumping = Mathf.RoundToInt(jumpingScore)
                 };
 
                 }

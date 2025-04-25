@@ -1,6 +1,7 @@
 const common = require(`../lib/common`)
 
 function setTopFreekick(matchDetails) {
+  console.log('setTopFreekick called with:', JSON.stringify(matchDetails, null, 2))
   common.removeBallFromAllPlayers(matchDetails)
   let { kickOffTeam, secondTeam } = matchDetails
   let [, pitchHeight] = matchDetails.pitchSize
@@ -17,9 +18,14 @@ function setTopFreekick(matchDetails) {
   if (halfwayToLastQtr) return setTopHalfwayToBottomQtrYPos(matchDetails, attack, defence)
   if (upperFinalQtr) return setTopBottomQtrCentreYPos(matchDetails, attack, defence)
   if (lowerFinalQtr) return setTopLowerFinalQtrBylinePos(matchDetails, attack, defence)
+
+  matchDetails.iterationLog.push('Top freekick: players repositioned, game resuming')
+  matchDetails.endIteration = false
+  return matchDetails
 }
 
 function setBottomFreekick(matchDetails) {
+  console.log('setBottomFreekick called with:', JSON.stringify(matchDetails, null, 2))
   common.removeBallFromAllPlayers(matchDetails)
   let { kickOffTeam, secondTeam } = matchDetails
   let [, pitchHeight] = matchDetails.pitchSize
@@ -36,6 +42,10 @@ function setBottomFreekick(matchDetails) {
   if (halfwayToLastQtr) return setBottomHalfwayToTopQtrYPos(matchDetails, attack, defence)
   if (upperFinalQtr) return setBottomUpperQtrCentreYPos(matchDetails, attack, defence)
   if (lowerFinalQtr) return setBottomLowerFinalQtrBylinePos(matchDetails, attack, defence)
+
+  matchDetails.iterationLog.push('Bottom freekick: players repositioned, game resuming')
+  matchDetails.endIteration = false
+  return matchDetails
 }
 
 function setTopOneHundredYPos(matchDetails, attack, defence) {
@@ -53,8 +63,6 @@ function setTopOneHundredYPos(matchDetails, attack, defence) {
     if (player.position == 'GK') player.currentPOS = player.originPOS.map(x => x)
     if (player.position != 'GK') player.currentPOS = [player.originPOS[0], common.upToMin(player.originPOS[1] - 100, 0)]
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBottomOneHundredYPos(matchDetails, attack, defence) {
@@ -75,8 +83,6 @@ function setBottomOneHundredYPos(matchDetails, attack, defence) {
       player.currentPOS = [player.originPOS[0], common.upToMax(player.originPOS[1] + 100, pitchHeight)]
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setTopOneHundredToHalfwayYPos(matchDetails, attack, defence) {
@@ -127,8 +133,6 @@ function setTopOneHundredToHalfwayYPos(matchDetails, attack, defence) {
       player.currentPOS = [player.originPOS[0], parseInt(pitchHeight * 0.5, 10)]
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBottomOneHundredToHalfwayYPos(matchDetails, attack, defence) {
@@ -180,8 +184,6 @@ function setBottomOneHundredToHalfwayYPos(matchDetails, attack, defence) {
       player.currentPOS = [player.originPOS[0], parseInt(pitchHeight * 0.5, 10)]
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setTopHalfwayToBottomQtrYPos(matchDetails, attack, defence) {
@@ -218,8 +220,6 @@ function setTopHalfwayToBottomQtrYPos(matchDetails, attack, defence) {
       player.currentPOS = [player.originPOS[0], parseInt(pitchHeight * 0.5, 10)]
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBottomHalfwayToTopQtrYPos(matchDetails, attack, defence) {
@@ -256,8 +256,6 @@ function setBottomHalfwayToTopQtrYPos(matchDetails, attack, defence) {
       player.currentPOS = [player.originPOS[0], parseInt(pitchHeight * 0.5, 10)]
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setTopBottomQtrCentreYPos(matchDetails, attack, defence) {
@@ -298,8 +296,6 @@ function setTopBottomQtrCentreYPos(matchDetails, attack, defence) {
       player.currentPOS = common.getRandomBottomPenaltyPosition(matchDetails)
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBottomUpperQtrCentreYPos(matchDetails, attack, defence) {
@@ -339,8 +335,6 @@ function setBottomUpperQtrCentreYPos(matchDetails, attack, defence) {
       player.currentPOS = common.getRandomTopPenaltyPosition(matchDetails)
     }
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setTopLowerFinalQtrBylinePos(matchDetails, attack, defence) {
@@ -373,8 +367,6 @@ function setTopLowerFinalQtrBylinePos(matchDetails, attack, defence) {
       playerSpace -= 2
     } else player.currentPOS = common.getRandomBottomPenaltyPosition(matchDetails)
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 function setBottomLowerFinalQtrBylinePos(matchDetails, attack, defence) {
@@ -407,8 +399,6 @@ function setBottomLowerFinalQtrBylinePos(matchDetails, attack, defence) {
       playerSpace += 2
     } else player.currentPOS = common.getRandomTopPenaltyPosition(matchDetails)
   }
-  matchDetails.endIteration = true
-  return matchDetails
 }
 
 module.exports = {

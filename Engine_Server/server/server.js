@@ -16,7 +16,7 @@ app.post('/simulate', async (req, res) => {
     let matchDetails = await engine.initiateGame(team1, team2, pitchDetails);
     
     let iterationCount = 0;
-    let maxIterations = 10000;
+    let maxIterations = 2000;
 
     // Initialize playerOverIterations
     let playerOverIterations = {
@@ -28,9 +28,18 @@ app.post('/simulate', async (req, res) => {
     let allIterations = [];
 
     // Simulate the match
-    while (iterationCount < maxIterations && !matchDetails.endIteration) {
+    while (iterationCount < maxIterations) {
+      if (!matchDetails || !matchDetails.pitchSize) {
+        console.error('Invalid matchDetails detected, stopping simulation');
+        break;
+      }
+
       // Play an iteration and get start and end positions
       let iterationResult = await engine.playIteration(matchDetails, playerOverIterations, iterationCount + 1);
+      if (!iterationResult || !iterationResult.matchDetails) {
+        console.warn(`Skipping iteration ${iterationCount + 1} due to invalid result.`);
+        break;
+      }
       matchDetails = iterationResult.matchDetails;
 
       // Add player positions for this iteration
@@ -55,11 +64,16 @@ app.post('/simulate', async (req, res) => {
       });
 
       // Add the iteration data
+      if (!iterationResult?.startPositions?.players) {
+        console.warn(`Iteration ${iterationCount + 1} missing player positions — likely due to a special state.`);
+      }
+      
       allIterations.push({
         iteration: iterationCount + 1,
-        positions: iterationResult.startPositions.players,
-        iterationLog: matchDetails.iterationLog,
+        positions: iterationResult?.startPositions?.players ?? {},
+        iterationLog: matchDetails.iterationLog ?? []
       });
+      
 
       iterationCount++;
 
@@ -68,7 +82,7 @@ app.post('/simulate', async (req, res) => {
       console.log(matchDetails.iterationLog);
 
       // Switch to the second half at iteration 5001
-      if (iterationCount === 5001 && matchDetails.half === 1) {
+      if (iterationCount === 1000 && matchDetails.half === 1) {
         matchDetails = await engine.startSecondHalf(matchDetails);
       }
     }

@@ -27,22 +27,36 @@ async function initiateGame(team1, team2, pitchDetails) {
   matchDetails.secondTeam = secondTeam
   return matchDetails
 }
+
 async function playIteration(matchDetails, playerOverIterations, iterationCount) {
-  let closestPlayerA = {
-    'name': '',
-    'position': 100000
+  if (!playerOverIterations.kickOffTeam || !playerOverIterations.secondTeam) {
+    throw new Error('playerOverIterations is not properly initialized')
   }
-  let closestPlayerB = {
-    'name': '',
-    'position': 100000
+  if (playerOverIterations.kickOffTeam.length !== kickOffTeam.players.length) {
+    throw new Error('Mismatch between playerOverIterations.kickOffTeam and kickOffTeam.players')
   }
+  if (!matchDetails) {
+    throw new Error('matchDetails is undefined')
+  }
+  let closestPlayerA = { 'name': '', 'position': 100000 }
+  let closestPlayerB = { 'name': '', 'position': 100000 }
+
+  console.log(`\n--- Iteration ${iterationCount} ---`)
+  console.log('Initial ball position:', matchDetails.ball.position)
+  console.log('withPlayer:', matchDetails.ball.withPlayer, 'withTeam:', matchDetails.ball.withTeam)
+
   validate.validateMatchDetails(matchDetails)
   validate.validateTeamSecondHalf(matchDetails.kickOffTeam)
   validate.validateTeamSecondHalf(matchDetails.secondTeam)
   validate.validatePlayerPositions(matchDetails)
+
   matchDetails.iterationLog = []
 
   let { kickOffTeam, secondTeam } = matchDetails
+  common.matchInjury(matchDetails, kickOffTeam)
+  common.matchInjury(matchDetails, secondTeam)
+
+  matchDetails = ballMovement.moveBall(matchDetails)
 
   // Capture start positions
   let startPositions = {
@@ -91,46 +105,51 @@ async function playIteration(matchDetails, playerOverIterations, iterationCount)
     })
   })
 
-  common.matchInjury(matchDetails, kickOffTeam)
-  common.matchInjury(matchDetails, secondTeam)
-  matchDetails = ballMovement.moveBall(matchDetails)
   if (matchDetails.endIteration === true) {
     delete matchDetails.endIteration
-    return { matchDetails, startPositions, endPositions: startPositions } // No movement occurred
+    return { matchDetails, startPositions, endPositions: startPositions }
   }
+
   playerMovement.closestPlayerToBall(closestPlayerA, kickOffTeam, matchDetails)
   playerMovement.closestPlayerToBall(closestPlayerB, secondTeam, matchDetails)
+
   kickOffTeam = playerMovement.decideMovement(closestPlayerA, kickOffTeam, secondTeam, matchDetails)
   secondTeam = playerMovement.decideMovement(closestPlayerB, secondTeam, kickOffTeam, matchDetails)
+
   matchDetails.kickOffTeam = kickOffTeam
   matchDetails.secondTeam = secondTeam
+
   if (matchDetails.ball.ballOverIterations.length === 0 || matchDetails.ball.withTeam !== '') {
     playerMovement.checkOffside(kickOffTeam, secondTeam, matchDetails)
   }
 
-  // Capture end positions
+  if (matchDetails.specialState === 'freeKick' || matchDetails.specialState === 'goalKick') {
+    ballMovement.handleSpecialState(matchDetails)
+    playerMovement.handleSpecialState(matchDetails)
+
+    matchDetails.specialState = null
+  }
+
   let endPositions = {
     ball: Object.assign({}, matchDetails.ball.position),
     players: {
-      kickOffTeam: kickOffTeam.players.map(player =>
-        ({
-          id: player.id,
-          name: player.name,
-          iteration: iterationCount,
-          position: { x: player.currentPOS[0], y: player.currentPOS[1] }
-        })),
-      secondTeam: secondTeam.players.map(player =>
-        ({
-          id: player.id,
-          name: player.name,
-          iteration: iterationCount,
-          position: { x: player.currentPOS[0], y: player.currentPOS[1] }
-        }))
+      kickOffTeam: kickOffTeam.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        iteration: iterationCount,
+        position: { x: player.currentPOS[0], y: player.currentPOS[1] }
+      })),
+      secondTeam: secondTeam.players.map(player => ({
+        id: player.id,
+        name: player.name,
+        iteration: iterationCount,
+        position: { x: player.currentPOS[0], y: player.currentPOS[1] }
+      }))
     }
   }
-
   return { matchDetails, startPositions, endPositions }
 }
+
 
 async function startSecondHalf(matchDetails) {
   validate.validateMatchDetails(matchDetails)

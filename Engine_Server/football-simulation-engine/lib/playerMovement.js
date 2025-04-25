@@ -187,11 +187,9 @@ function handleBallPlayerActions(matchDetails, thisPlayer, team, opp, action) {
       updateInformation(matchDetails, newPosition)
     } else if (action === `pass`) {
       let newPosition = ballMovement.ballPassed(matchDetails, team, thisPlayer)
-      matchDetails.iterationLog.push(`passed to new position: ${newPosition}`)
       updateInformation(matchDetails, newPosition)
     } else if (action === `cross`) {
       let newPosition = ballMovement.ballCrossed(matchDetails, team, thisPlayer)
-      matchDetails.iterationLog.push(`crossed to new position: ${newPosition}`)
       updateInformation(matchDetails, newPosition)
     } else if (action === `throughBall`) {
       let newPosition = ballMovement.throughBall(matchDetails, team, thisPlayer)
