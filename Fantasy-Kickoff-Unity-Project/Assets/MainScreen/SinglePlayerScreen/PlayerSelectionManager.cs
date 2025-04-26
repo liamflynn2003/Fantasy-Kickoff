@@ -53,18 +53,19 @@ public class PlayerSelectionManager : MonoBehaviour
 {
         switch (positionIndex)
         {
-            case 0: return new Vector2(340, 0);   // GK
-            case 1: return new Vector2(600, 80);  // RB
-            case 2: return new Vector2(420, 80); // CB
-            case 3: return new Vector2(230, 80); // CB
-            case 4: return new Vector2(80, 80); // LB
-            case 5: return new Vector2(510, 270); // RM
-            case 6: return new Vector2(340, 270); // CM
-            case 7: return new Vector2(170, 270); // LM
-            case 8: return new Vector2(510, 500); // RW
-            case 9: return new Vector2(340, 500); // ST
-            case 10: return new Vector2(170, 500); // LW
-            default: return new Vector2(340, 500);   // Default position
+            /// 4-3-3 Formation
+            case 0: return new Vector2(60, 0);   // GK
+            case 1: return new Vector2(90, 20);  // RB
+            case 2: return new Vector2(70, 20); // CB
+            case 3: return new Vector2(50, 20); // CB
+            case 4: return new Vector2(30, 20); // LB
+            case 5: return new Vector2(90, 120); // RM
+            case 6: return new Vector2(60, 120); // CM
+            case 7: return new Vector2(30, 120); // LM
+            case 8: return new Vector2(90, 270); // RW
+            case 9: return new Vector2(60, 270); // ST
+            case 10: return new Vector2(30, 270); // LW
+            default: return new Vector2(60, 120);
         }
 }
 

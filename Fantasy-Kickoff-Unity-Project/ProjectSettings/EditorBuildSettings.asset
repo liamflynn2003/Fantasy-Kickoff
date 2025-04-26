@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainScreen.unity
     guid: 2a605758157b940469f7d6eaa1914adf
+  - enabled: 1
+    path: Assets/Scenes/SimScreen.unity
+    guid: 223e6af4a97050f4b87e2d73548db3ef
   m_configObjects: {}

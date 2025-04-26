@@ -36,24 +36,32 @@ public void SimulateMatch()
 
     StartCoroutine(PostMatchData(jsonData));
 }
+private IEnumerator PostMatchData(string json)
+{
+    int maxRetries = 5;
+    int retryCount = 0;
+    bool success = false;
 
-    private IEnumerator PostMatchData(string json)
+    while (retryCount < maxRetries && !success)
     {
-        Debug.Log("Sending JSON data: " + json);
+        Debug.Log($"Sending attempt {retryCount + 1}");
+
         UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
         byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(json);
         request.uploadHandler = new UploadHandlerRaw(jsonToSend);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
 
+        request.timeout = 30;
+
         yield return request.SendWebRequest();
 
         if (request.result == UnityWebRequest.Result.Success)
         {
+            success = true;
             Debug.Log("Match simulation started successfully.");
             string responseText = request.downloadHandler.text;
 
-            // Write the response to a JSON file
             string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
             File.WriteAllText(filePath, responseText);
 
@@ -61,9 +69,20 @@ public void SimulateMatch()
         }
         else
         {
-            Debug.LogError("Failed to start match simulation: " + request.error);
+            Debug.LogError($"Failed to start match simulation: {request.error}. Retrying...");
+            retryCount++;
+
+            yield return new WaitForSeconds(1f);
         }
     }
+
+    if (!success)
+    {
+        Debug.LogError("All retry attempts failed. Could not start match simulation.");
+    }
+}
+
+
 }
 
 [System.Serializable]
@@ -89,9 +108,9 @@ public class MatchRequest
         };
         pitchDetails = new PitchDetails
         {
-            pitchWidth = 680,
-            pitchHeight = 1050,
-            goalWidth = 90
+            pitchWidth = 500,
+            pitchHeight = 620,
+            goalWidth = 100
         };
     }
 
