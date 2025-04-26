@@ -63,9 +63,20 @@ private IEnumerator PostMatchData(string json)
             string responseText = request.downloadHandler.text;
 
             string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
-            File.WriteAllText(filePath, responseText);
 
+            // Delete old match json file if it exists
+            if (File.Exists(filePath))
+            {
+                Debug.Log("Old match simulation result found. Deleting...");
+                File.Delete(filePath);
+            }
+
+            // Save new simulation result
+            File.WriteAllText(filePath, responseText);
             Debug.Log($"Match simulation result saved to: {filePath}");
+
+            // Load SimScreen scene now
+            UnityEngine.SceneManagement.SceneManager.LoadScene("SimScreen");
         }
         else
         {
@@ -81,6 +92,7 @@ private IEnumerator PostMatchData(string json)
         Debug.LogError("All retry attempts failed. Could not start match simulation.");
     }
 }
+
 
 
 }
