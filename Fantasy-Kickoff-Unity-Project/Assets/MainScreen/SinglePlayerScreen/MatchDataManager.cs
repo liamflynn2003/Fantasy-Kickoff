@@ -49,47 +49,44 @@ private IEnumerator PostMatchData(string json)
         loadingScreen.SetActive(true);
 
     while (retryCount < maxRetries && !success)
+{
+    Debug.Log($"Sending attempt {retryCount + 1}");
+
+    UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
+    byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(json);
+    request.uploadHandler = new UploadHandlerRaw(jsonToSend);
+    request.downloadHandler = new DownloadHandlerBuffer();
+    request.SetRequestHeader("Content-Type", "application/json");
+
+    request.timeout = -1;
+
+    yield return request.SendWebRequest();
+
+    if (request.result == UnityWebRequest.Result.Success)
     {
-        Debug.Log($"Sending attempt {retryCount + 1}");
+        success = true;
+        Debug.Log("Match simulation started successfully.");
+        string responseText = request.downloadHandler.text;
 
-        UnityWebRequest request = new UnityWebRequest(serverUrl, "POST");
-        byte[] jsonToSend = new System.Text.UTF8Encoding().GetBytes(json);
-        request.uploadHandler = new UploadHandlerRaw(jsonToSend);
-        request.downloadHandler = new DownloadHandlerBuffer();
-        request.SetRequestHeader("Content-Type", "application/json");
+        string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
+        File.WriteAllText(filePath, responseText);
 
-        request.timeout = 30;
-
-        yield return request.SendWebRequest();
-
-        if (request.result == UnityWebRequest.Result.Success)
-        {
-            success = true;
-            Debug.Log("Match simulation started successfully.");
-            string responseText = request.downloadHandler.text;
-
-            string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
-
-            if (File.Exists(filePath))
-            {
-                Debug.Log("Old match simulation result found. Deleting...");
-                File.Delete(filePath);
-            }
-
-            File.WriteAllText(filePath, responseText);
-            Debug.Log($"Match simulation result saved to: {filePath}");
-
-            // Load SimScreen
-            UnityEngine.SceneManagement.SceneManager.LoadScene("SimScreen");
-        }
-        else
-        {
-            Debug.LogError($"Failed to start match simulation: {request.error}. Retrying...");
-            retryCount++;
-
-            yield return new WaitForSeconds(1f);
-        }
+        Debug.Log($"Match simulation result saved to: {filePath}");
+    
+        // Load the MatchAnimatorScene
+        UnityEngine.SceneManagement.SceneManager.LoadScene("SimScreen");
     }
+    else
+    {
+        Debug.LogError($"Failed to start match simulation: {request.error}. Retrying...");
+        retryCount++;
+        yield return new WaitForSeconds(1f);
+    }
+
+    // Clean up request
+    request.Dispose();
+}
+
 
     if (!success)
     {
@@ -100,9 +97,6 @@ private IEnumerator PostMatchData(string json)
             loadingScreen.SetActive(false);
     }
 }
-
-
-
 
 }
 
@@ -130,7 +124,7 @@ public class MatchRequest
         pitchDetails = new PitchDetails
         {
             pitchWidth = 500,
-            pitchHeight = 620,
+            pitchHeight = 700,
             goalWidth = 100
         };
     }

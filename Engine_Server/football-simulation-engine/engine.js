@@ -29,21 +29,8 @@ async function initiateGame(team1, team2, pitchDetails) {
 }
 
 async function playIteration(matchDetails, playerOverIterations, iterationCount) {
-  if (!playerOverIterations.kickOffTeam || !playerOverIterations.secondTeam) {
-    throw new Error('playerOverIterations is not properly initialized')
-  }
-  if (playerOverIterations.kickOffTeam.length !== kickOffTeam.players.length) {
-    throw new Error('Mismatch between playerOverIterations.kickOffTeam and kickOffTeam.players')
-  }
-  if (!matchDetails) {
-    throw new Error('matchDetails is undefined')
-  }
   let closestPlayerA = { 'name': '', 'position': 100000 }
   let closestPlayerB = { 'name': '', 'position': 100000 }
-
-  console.log(`\n--- Iteration ${iterationCount} ---`)
-  console.log('Initial ball position:', matchDetails.ball.position)
-  console.log('withPlayer:', matchDetails.ball.withPlayer, 'withTeam:', matchDetails.ball.withTeam)
 
   validate.validateMatchDetails(matchDetails)
   validate.validateTeamSecondHalf(matchDetails.kickOffTeam)

@@ -46,11 +46,20 @@ public class MatchAnimator : MonoBehaviour
     public float timeBetweenIterations = 0.05f; // Speed of animation
 
     void Start()
+{
+    LoadSimulationData();
+
+    if (simulationResult != null)
     {
-        LoadSimulationData();
         SpawnPlayers();
         StartCoroutine(PlayMatch());
     }
+    else
+    {
+        Debug.LogError("Simulation data could not be loaded. Check if the JSON file exists and is valid.");
+    }
+}
+
 
     Vector2 ConvertToPitchPosition(Vector2 enginePos, bool isSecondTeam)
     {
