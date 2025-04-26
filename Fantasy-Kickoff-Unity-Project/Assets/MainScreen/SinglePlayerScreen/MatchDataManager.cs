@@ -10,6 +10,7 @@ public class MatchDataManager : MonoBehaviour
 {
     public PlayerSelectionManager selectionManager;
     private string serverUrl = "http://13.219.10.67:3000/simulate";
+    public GameObject loadingScreen; 
 
 public void SimulateMatch()
 {
@@ -36,11 +37,16 @@ public void SimulateMatch()
 
     StartCoroutine(PostMatchData(jsonData));
 }
+
 private IEnumerator PostMatchData(string json)
 {
     int maxRetries = 5;
     int retryCount = 0;
     bool success = false;
+
+    // Activate LoadingScreen before starting
+    if (loadingScreen != null)
+        loadingScreen.SetActive(true);
 
     while (retryCount < maxRetries && !success)
     {
@@ -64,18 +70,16 @@ private IEnumerator PostMatchData(string json)
 
             string filePath = Path.Combine(Application.persistentDataPath, "MatchSimulationResult.json");
 
-            // Delete old match json file if it exists
             if (File.Exists(filePath))
             {
                 Debug.Log("Old match simulation result found. Deleting...");
                 File.Delete(filePath);
             }
 
-            // Save new simulation result
             File.WriteAllText(filePath, responseText);
             Debug.Log($"Match simulation result saved to: {filePath}");
 
-            // Load SimScreen scene now
+            // Load SimScreen
             UnityEngine.SceneManagement.SceneManager.LoadScene("SimScreen");
         }
         else
@@ -90,8 +94,13 @@ private IEnumerator PostMatchData(string json)
     if (!success)
     {
         Debug.LogError("All retry attempts failed. Could not start match simulation.");
+        
+        // Hide LoadingScreen if all attempts fail
+        if (loadingScreen != null)
+            loadingScreen.SetActive(false);
     }
 }
+
 
 
 
