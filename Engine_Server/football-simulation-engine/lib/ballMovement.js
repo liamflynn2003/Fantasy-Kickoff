@@ -4,24 +4,43 @@ const setPositions = require(`../lib/setPositions`)
 function moveBall(matchDetails) {
   if (matchDetails.ball.ballOverIterations === undefined || matchDetails.ball.ballOverIterations.length == 0) {
     matchDetails.ball.direction = `wait`
+
+    // ⬇️ ALWAYS push ball position even if not moving
+    matchDetails.ball.ballOverIterationsHistory.push({
+      iteration: matchDetails.currentIteration,
+      position: [...matchDetails.ball.position]
+    })
+
     return matchDetails
   }
+
   let { ball } = matchDetails
   let bPosition = ball.position
   let { kickOffTeam, secondTeam } = matchDetails
   let ballPos = ball.ballOverIterations[0]
+
   getBallDirection(matchDetails, ballPos)
   const power = ballPos[2]
   ballPos.splice()
   let bPlayer = setBPlayer(ballPos)
   let endPos = resolveBallMovement(bPlayer, bPosition, ballPos, power, kickOffTeam, secondTeam, matchDetails)
+
   if (matchDetails.endIteration == true) return matchDetails
+
+  // ⬇️ If ball is moving, still push the ball position!
+  matchDetails.ball.ballOverIterationsHistory.push({
+    iteration: matchDetails.currentIteration,
+    position: [...ballPos]
+  })
+
   matchDetails.ball.ballOverIterations.shift()
   matchDetails.iterationLog.push(`ball still moving from previous kick: ${endPos}`)
   matchDetails.ball.position = endPos
   checkGoalScored(matchDetails)
+
   return matchDetails
 }
+
 
 function setBPlayer(ballPos) {
   return {
@@ -268,8 +287,15 @@ function getPlayersInDistance(team, player, pitchSize) {
 }
 
 function resolveBallMovement(player, thisPOS, newPOS, power, team, opp, matchDetails) {
+  if (!matchDetails || !matchDetails.ball) {
+    console.error('ERROR: matchDetails or matchDetails.ball is missing in resolveBallMovement! Skipping ball movement.')
+    return
+  }
+
   common.removeBallFromAllPlayers(matchDetails)
+
   let lineToEndPosition = common.getBallTrajectory(thisPOS, newPOS, power)
+
   for (const thisPos of lineToEndPosition) {
     let checkPos = [common.round(thisPos[0], 0), common.round(thisPos[1], 0), thisPos[2]]
     let playerInfo1 = setPositions.closestPlayerToPosition(player, team, checkPos)
@@ -277,11 +303,22 @@ function resolveBallMovement(player, thisPOS, newPOS, power, team, opp, matchDet
     let thisPlayerProx = Math.max(playerInfo1.proxToBall, playerInfo2.proxToBall)
     let thisPlayer = (thisPlayerProx == playerInfo1.proxToBall) ? playerInfo1.thePlayer : playerInfo2.thePlayer
     let thisTeam = (thisPlayerProx == playerInfo1.proxToBall) ? team : opp
-    if (thisPlayer) thisPlayerIsInProximity(matchDetails, thisPlayer, thisPOS, thisPos, power, thisTeam)
+    if (thisPlayer) {
+      thisPlayerIsInProximity(matchDetails, thisPlayer, thisPOS, thisPos, power, thisTeam)
+    }
   }
+
   let lastTeam = matchDetails.ball.lastTouch.teamID
   matchDetails = setPositions.keepInBoundaries(matchDetails, lastTeam, newPOS)
-  if (matchDetails.endIteration == true) return
+
+  if (matchDetails && matchDetails.endIteration === true) return
+
+  if (!matchDetails || !matchDetails.ball) {
+    // eslint-disable-next-line max-len
+    console.error('ERROR: matchDetails.ball missing at end of resolveBallMovement! Cannot determine last ball position.')
+    return
+  }
+
   let lastPOS = matchDetails.ballIntended || matchDetails.ball.position
   delete matchDetails.ballIntended
   return [common.round(lastPOS[0], 2), common.round(lastPOS[1], 2)]

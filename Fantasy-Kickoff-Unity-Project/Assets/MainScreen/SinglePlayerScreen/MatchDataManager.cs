@@ -26,7 +26,7 @@ public void SimulateMatch()
     MatchRequest matchRequest = new MatchRequest(teamOne, teamTwo);
     Debug.Log(matchRequest.ToString());
 
-    // Use Newtonsoft.Json for serialization
+    // Serialize MatchRequest
     string jsonData = JsonConvert.SerializeObject(matchRequest, Formatting.Indented);
 
     if (string.IsNullOrEmpty(jsonData))
@@ -35,12 +35,28 @@ public void SimulateMatch()
         return;
     }
 
+    SaveJsonRequest(jsonData);
     StartCoroutine(PostMatchData(jsonData));
 }
 
+private void SaveJsonRequest(string json)
+{
+    try
+    {
+        string path = Path.Combine(Application.persistentDataPath, "LastMatchRequest.json");
+        File.WriteAllText(path, json);
+        Debug.Log($"Saved match request JSON at: {path}");
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError("Failed to save match request JSON: " + ex.Message);
+    }
+}
+
+
 private IEnumerator PostMatchData(string json)
 {
-    int maxRetries = 5;
+    int maxRetries = 10;
     int retryCount = 0;
     bool success = false;
 
@@ -123,8 +139,8 @@ public class MatchRequest
         };
         pitchDetails = new PitchDetails
         {
-            pitchWidth = 500,
-            pitchHeight = 700,
+            pitchWidth = 680,
+            pitchHeight = 1050,
             goalWidth = 100
         };
     }
@@ -209,10 +225,6 @@ public class PlayerJsonData
     public int[] currentPOS;
     public float fitness;
     public bool injured;
-    public long playerID;
-    public string action;
-    public bool offside;
-    public bool hasBall;
     public PlayerStats stats;
 }
 

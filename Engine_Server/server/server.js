@@ -14,18 +14,15 @@ app.post('/simulate', async (req, res) => {
 
     // Initialize the game (first half)
     let matchDetails = await engine.initiateGame(team1, team2, pitchDetails);
-    
+    matchDetails.ball.ballOverIterationsHistory = [];
     let iterationCount = 0;
-    let maxIterations = 2000;
+    let maxIterations = 5000;
 
     // Initialize playerOverIterations
-    let playerOverIterations = {
+    let playersOverIterations = {
       kickOffTeam: team1.players.map(player => ({ id: player.id, name: player.name, positions: [] })),
       secondTeam: team2.players.map(player => ({ id: player.id, name: player.name, positions: [] }))
     };
-
-    // Store all the player positions for each iteration
-    let allIterations = [];
 
     // Simulate the match
     while (iterationCount < maxIterations) {
@@ -35,54 +32,23 @@ app.post('/simulate', async (req, res) => {
       }
 
       // Play an iteration and get start and end positions
-      let iterationResult = await engine.playIteration(matchDetails, playerOverIterations, iterationCount + 1);
+      matchDetails.currentIteration = iterationCount + 1;
+      let iterationResult = await engine.playIteration(matchDetails, playersOverIterations, iterationCount + 1);
       if (!iterationResult || !iterationResult.matchDetails) {
         console.warn(`Skipping iteration ${iterationCount + 1} due to invalid result.`);
         break;
       }
       matchDetails = iterationResult.matchDetails;
 
-      // Add player positions for this iteration
-      playerOverIterations.kickOffTeam.forEach((player, index) => {
-        player.positions.push({
-          iteration: iterationCount + 1,
-          currentPos: {
-            x: matchDetails.kickOffTeam.players[index].currentPOS[0],
-            y: matchDetails.kickOffTeam.players[index].currentPOS[1]
-          }
-        });
-      });
-
-      playerOverIterations.secondTeam.forEach((player, index) => {
-        player.positions.push({
-          iteration: iterationCount + 1,
-          currentPos: {
-            x: matchDetails.secondTeam.players[index].currentPOS[0],
-            y: matchDetails.secondTeam.players[index].currentPOS[1]
-          }
-        });
-      });
-
       // Add the iteration data
       if (!iterationResult?.startPositions?.players) {
         console.warn(`Iteration ${iterationCount + 1} missing player positions — likely due to a special state.`);
       }
-      
-      allIterations.push({
-        iteration: iterationCount + 1,
-        positions: iterationResult?.startPositions?.players ?? {},
-        iterationLog: matchDetails.iterationLog ?? []
-      });
-      
-
+  
       iterationCount++;
 
-      // Log every iteration
-      console.log(`Iteration ${iterationCount}:`);
-      console.log(matchDetails.iterationLog);
-
-      // Switch to the second half at iteration 5001
-      if (iterationCount === 1000 && matchDetails.half === 1) {
+      // Switch to the second half
+      if (iterationCount === 2500 && matchDetails.half === 1) {
         matchDetails = await engine.startSecondHalf(matchDetails);
       }
     }
@@ -96,8 +62,7 @@ app.post('/simulate', async (req, res) => {
     // Send back the final result with player positions for each iteration, the score, and iteration logs
     res.json({
       matchDetails: matchDetails,
-      totalIterations: iterationCount,
-      playerOverIterations: playerOverIterations, // Include player positions over iterations
+      playersOverIterations: playersOverIterations, // Include player positions over iterations
       score: score, // Include the final score
     });
   } catch (error) {

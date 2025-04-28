@@ -12,17 +12,25 @@ function selectAction(possibleActions) {
 }
 
 function findPossActions(player, team, opposition, ballX, ballY, matchDetails) {
+  if (!matchDetails || !matchDetails.pitchSize) {
+    console.error('ERROR: matchDetails.pitchSize is missing! Cannot calculate actions.')
+    return []
+  }
+
+  const [pitchHeight] = matchDetails.pitchSize
+
+  // Now safe to use pitchWidth, pitchHeight, goalWidth here
   let possibleActions = populateActionsJSON()
-  const [, pitchHeight] = matchDetails.pitchSize
   let params = []
-  let {
-    hasBall, originPOS
-  } = player
+
+  let { hasBall, originPOS } = player
   if (hasBall === false) params = playerDoesNotHaveBall(player, ballX, ballY, matchDetails)
   else if (originPOS[1] > (pitchHeight / 2)) params = bottomTeamPlayerHasBall(matchDetails, player, team, opposition)
   else params = topTeamPlayerHasBall(matchDetails, player, team, opposition)
+
   return populatePossibleActions(possibleActions, ...params)
 }
+
 
 function topTeamPlayerHasBall(matchDetails, player, team, opposition) {
   let playerInformation = setPositions.closestPlayerToPosition(player, opposition, player.currentPOS)

@@ -28,7 +28,7 @@ async function initiateGame(team1, team2, pitchDetails) {
   return matchDetails
 }
 
-async function playIteration(matchDetails, playerOverIterations, iterationCount) {
+async function playIteration(matchDetails, playersOverIterations, iterationCount) {
   let closestPlayerA = { 'name': '', 'position': 100000 }
   let closestPlayerB = { 'name': '', 'position': 100000 }
 
@@ -52,26 +52,18 @@ async function playIteration(matchDetails, playerOverIterations, iterationCount)
       kickOffTeam: kickOffTeam.players.map(player => ({
         id: player.id,
         name: player.name,
-        iteration: iterationCount,
-        position: {
-          x: player.currentPOS[0],
-          y: player.currentPOS[1]
-        }
+        iteration: iterationCount
       })),
       secondTeam: secondTeam.players.map(player => ({
         id: player.id,
         name: player.name,
-        iteration: iterationCount,
-        position: {
-          x: player.currentPOS[0],
-          y: player.currentPOS[1]
-        }
+        iteration: iterationCount
       }))
     }
   }
 
   // Add player positions to playerOverIterations
-  playerOverIterations.kickOffTeam.forEach((player, index) => {
+  playersOverIterations.kickOffTeam.forEach((player, index) => {
     player.positions.push({
       name: kickOffTeam.players[index].name,
       iteration: iterationCount,
@@ -81,7 +73,7 @@ async function playIteration(matchDetails, playerOverIterations, iterationCount)
       }
     })
   })
-  playerOverIterations.secondTeam.forEach((player, index) => {
+  playersOverIterations.secondTeam.forEach((player, index) => {
     player.positions.push({
       name: secondTeam.players[index].name,
       iteration: iterationCount,

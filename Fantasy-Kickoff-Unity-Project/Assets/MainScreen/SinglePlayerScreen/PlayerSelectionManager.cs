@@ -39,35 +39,43 @@ public class PlayerSelectionManager : MonoBehaviour
             case 2: return "CB";
             case 3: return "CB";
             case 4: return "LB";
-            case 5: return "RM";
+            case 5: return "CM";
             case 6: return "CM";
-            case 7: return "LM";
-            case 8: return "RW";
+            case 7: return "CM";
+            case 8: return "ST";
             case 9: return "ST";
-            case 10: return "LW";
+            case 10: return "ST";
             default: return "Unknown";
         }
     }
 
     public Vector2 CalculateStartPos(int positionIndex, bool isTeamOne)
-{
-        switch (positionIndex)
-        {
-            /// 4-3-3 Formation
-            case 0: return new Vector2(60, 0);   // GK
-            case 1: return new Vector2(90, 20);  // RB
-            case 2: return new Vector2(70, 20); // CB
-            case 3: return new Vector2(50, 20); // CB
-            case 4: return new Vector2(30, 20); // LB
-            case 5: return new Vector2(90, 120); // RM
-            case 6: return new Vector2(60, 120); // CM
-            case 7: return new Vector2(30, 120); // LM
-            case 8: return new Vector2(90, 270); // RW
-            case 9: return new Vector2(60, 270); // ST
-            case 10: return new Vector2(30, 270); // LW
-            default: return new Vector2(60, 120);
-        }
-}
+    {
+        Vector2 pos = Vector2.zero;
+    switch (positionIndex)
+    {
+        case 0: pos = new Vector2(340, 0); break; // GK (Center of 680 width)
+
+        // DEFENDERS (LB, LCB, RCB, RB)
+        case 1: pos = new Vector2(100, 80); break; // LB
+        case 2: pos = new Vector2(230, 80); break; // LCB
+        case 3: pos = new Vector2(420, 80); break; // RCB
+        case 4: pos = new Vector2(600, 80); break; // RB
+
+        // MIDFIELDERS (LM, CM, RM)
+        case 5: pos = new Vector2(200, 270); break; // LM
+        case 6: pos = new Vector2(340, 270); break; // CM
+        case 7: pos = new Vector2(480, 270); break; // RM
+
+        // FORWARDS (LW, ST, RW)
+        case 8: pos = new Vector2(200, 500); break; // LW
+        case 9: pos = new Vector2(340, 500); break; // ST
+        case 10: pos = new Vector2(480, 500); break; // RW
+
+        default: pos = new Vector2(340, 270); break; // fallback: center-midfield
+    }
+        return pos;
+    }
 
     private void UpdateUI(GameObject playerUI, PlayerListManager.PlayerData player)
     {
@@ -110,26 +118,49 @@ public class PlayerSelectionManager : MonoBehaviour
     }
 
     private void PopulateTeam(List<PlayerJsonData> players, bool isTeamOne)
+{
+    GameObject[] teamPlayers = isTeamOne ? teamOnePlayers : teamTwoPlayers;
+
+    List<PlayerJsonData> sortedPlayers = SortPlayersForAssignment(players);
+
+    for (int i = 0; i < sortedPlayers.Count && i < teamPlayers.Length; i++)
     {
-        GameObject[] teamPlayers = isTeamOne ? teamOnePlayers : teamTwoPlayers;
-
-        for (int i = 0; i < players.Count && i < teamPlayers.Length; i++)
+        PlayerJsonData playerJson = sortedPlayers[i];
+        PlayerListManager.PlayerData playerData = new PlayerListManager.PlayerData
         {
-            PlayerJsonData playerJson = players[i];
-            PlayerListManager.PlayerData playerData = new PlayerListManager.PlayerData
-            {
-                name = playerJson.name,
-                position = playerJson.position,
-                rating = 50,
-                skill = ConvertToSkill(playerJson.skill),
-                currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
-                fitness = playerJson.fitness,
-                injured = playerJson.injured
-            };
+            name = playerJson.name,
+            position = playerJson.position,
+            rating = 50,
+            skill = ConvertToSkill(playerJson.skill),
+            currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
+            fitness = playerJson.fitness,
+            injured = playerJson.injured
+        };
 
-            AssignPlayer(i, playerData, isTeamOne);
-        }
+        AssignPlayer(i, playerData, isTeamOne);
     }
+}
+
+private List<PlayerJsonData> SortPlayersForAssignment(List<PlayerJsonData> players)
+{
+    List<PlayerJsonData> sorted = new List<PlayerJsonData>();
+
+    sorted.Add(players.Find(p => p.position == "GK"));
+    sorted.Add(players.Find(p => p.position == "RB"));
+    sorted.Add(players.Find(p => p.position == "CB"));
+    sorted.Add(players.FindLast(p => p.position == "CB"));
+    sorted.Add(players.Find(p => p.position == "LB"));
+    sorted.Add(players.Find(p => p.position == "CM"));
+    sorted.Add(players.FindLast(p => p.position == "CM"));
+    sorted.Add(players.Find(p => p.position == "CM"));
+    sorted.Add(players.Find(p => p.position == "ST"));
+    sorted.Add(players.FindLast(p => p.position == "ST"));
+    sorted.Add(players.Find(p => p.position == "ST"));
+
+    return sorted;
+}
+
+
 
     private PlayerListManager.Skill ConvertToSkill(Dictionary<string, string> skillDict)
 {
@@ -154,15 +185,9 @@ public class PlayerSelectionManager : MonoBehaviour
     public string position;
     public string rating;
     public Dictionary<string, string> skill;
-    
     public int[] currentPOS;
-
     public int fitness;
     public bool injured;
-    public int playerID;
-    public string action;
-    public bool offside;
-    public bool hasBall;
 }
 
 [System.Serializable]

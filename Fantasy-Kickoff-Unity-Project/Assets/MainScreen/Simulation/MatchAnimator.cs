@@ -1,39 +1,55 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using System.IO;
 using Newtonsoft.Json;
 
 public class MatchAnimator : MonoBehaviour
 {
-    [System.Serializable]
-    public class PlayerPosition
-    {
-        public int iteration;
-        public PositionData position;
-    }
+[System.Serializable]
+public class MatchSimulationResult
+{
+    public MatchDetails matchDetails;
+    public int totalIterations;
+    public PlayersOverIterations playersOverIterations;
+}
 
-    [System.Serializable]
-    public class PositionData
-    {
-        public float x;
-        public float y;
-    }
+[System.Serializable]
+public class PlayersOverIterations
+{
+    public List<PlayerData> kickOffTeam;
+    public List<PlayerData> secondTeam;
+}
 
-    [System.Serializable]
-    public class PlayerData
-    {
-        public string name;
-        public List<PlayerPosition> positions;
-    }
+[System.Serializable]
+public class MatchDetails
+{
 
-    [System.Serializable]
-    public class MatchSimulationResult
-    {
-        public List<PlayerData> kickOffTeam;
-        public List<PlayerData> secondTeam;
-    }
+}
+
+[System.Serializable]
+public class PlayerData
+{
+    public string name;
+    public string position;
+    public List<PlayerPosition> positions;
+}
+
+[System.Serializable]
+public class PlayerPosition
+{
+    public int iteration;
+    public PositionData position;
+}
+
+[System.Serializable]
+public class PositionData
+{
+    public float x;
+    public float y;
+}
 
     public GameObject playerPrefab;
     public Transform playersParent;
@@ -46,48 +62,36 @@ public class MatchAnimator : MonoBehaviour
     public float timeBetweenIterations = 0.05f; // Speed of animation
 
     void Start()
-{
+    {   
+
+        RectTransform pitchRect = playersParent.GetComponent<RectTransform>();
+float width = pitchRect.rect.width;
+float height = pitchRect.rect.height;
+
+// Corners relative to center
+Vector2 topLeft = new Vector2(-width/2f, height/2f);
+Vector2 topRight = new Vector2(width/2f, height/2f);
+Vector2 bottomLeft = new Vector2(-width/2f, -height/2f);
+Vector2 bottomRight = new Vector2(width/2f, -height/2f);
+
+Vector3 pitchCenter = playersParent.localPosition;
+        Debug.Log($"Pitch center localPosition: {pitchCenter}");
+
+Debug.Log($"TopLeft: {topLeft}, TopRight: {topRight}, BottomLeft: {bottomLeft}, BottomRight: {bottomRight}");
+
     LoadSimulationData();
 
     if (simulationResult != null)
     {
         SpawnPlayers();
-        StartCoroutine(PlayMatch());
+        //StartCoroutine(PlayMatch());  
     }
     else
     {
         Debug.LogError("Simulation data could not be loaded. Check if the JSON file exists and is valid.");
     }
-}
-
-
-    Vector2 ConvertToPitchPosition(Vector2 enginePos, bool isSecondTeam)
-    {
-        float engineMaxX = 500f;
-        float engineMaxY = 620f;
-
-        RectTransform pitchRect = playersParent.GetComponent<RectTransform>();
-        float pitchWidth = pitchRect.rect.width;
-        float pitchHeight = pitchRect.rect.height;
-
-        // Normalize engine pos to 0–pitchWidth and 0–pitchHeight
-        float normalizedX = (enginePos.x / engineMaxX) * pitchWidth;
-        float normalizedY = (enginePos.y / engineMaxY) * pitchHeight;
-
-        // Center
-        normalizedX -= pitchWidth / 2f;
-        normalizedY -= pitchHeight / 2f;
-
-        // Flip second team
-        if (isSecondTeam)
-        {
-            normalizedX = -normalizedX;
-            normalizedY = -normalizedY;
-        }
-
-        return new Vector2(normalizedX, normalizedY);
+    
     }
-
 
     void LoadSimulationData()
     {
@@ -103,22 +107,70 @@ public class MatchAnimator : MonoBehaviour
         }
     }
 
-    void SpawnPlayers()
+void SpawnPlayers()
+{
+    if (simulationResult == null || simulationResult.playersOverIterations == null || playerPrefab == null || playersParent == null)
     {
-        foreach (var player in simulationResult.kickOffTeam)
+        Debug.LogError("Missing important references in MatchAnimator!");
+        return;
+    }
+
+    // KickOffTeam
+    foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
+    {
+        GameObject dot = Instantiate(playerPrefab, playersParent);
+
+        if (player.positions != null && player.positions.Count > 0)
         {
-            GameObject dot = Instantiate(playerPrefab, playersParent);
-            dot.GetComponent<SpriteRenderer>().color = Color.red; // KickOffTeam = Red
-            playerDots.Add(dot);
+            var firstPos = player.positions[0].position;
+            dot.name = $"TeamOne_{player.name}_({firstPos.x},{firstPos.y})";
+
+            // SWAP X and Y
+            dot.GetComponent<RectTransform>().anchoredPosition = new Vector2(firstPos.y, firstPos.x);
+        }
+        else
+        {
+            dot.name = $"TeamOne_{player.name}_NO_POS";
         }
 
-        foreach (var player in simulationResult.secondTeam)
+        Image circleImage = dot.GetComponentInChildren<Image>();
+        if (circleImage != null)
         {
-            GameObject dot = Instantiate(playerPrefab, playersParent);
-            dot.GetComponent<SpriteRenderer>().color = Color.blue; // SecondTeam = Blue
-            playerDots.Add(dot);
+            circleImage.color = Color.red;
         }
+
+        playerDots.Add(dot);
     }
+
+    // SecondTeam
+    foreach (var player in simulationResult.playersOverIterations.secondTeam)
+    {
+        GameObject dot = Instantiate(playerPrefab, playersParent);
+
+        if (player.positions != null && player.positions.Count > 0)
+        {
+            var firstPos = player.positions[0].position;
+            dot.name = $"TeamTwo_{player.name}_({firstPos.x},{firstPos.y})";
+
+            // SWAP X and Y
+            dot.GetComponent<RectTransform>().anchoredPosition = new Vector2(firstPos.y, firstPos.x);
+        }
+        else
+        {
+            dot.name = $"TeamTwo_{player.name}_NO_POS";
+        }
+
+        Image circleImage = dot.GetComponentInChildren<Image>();
+        if (circleImage != null)
+        {
+            circleImage.color = Color.blue;
+        }
+
+        playerDots.Add(dot);
+    }
+}
+
+
 
     IEnumerator PlayMatch()
     {
@@ -130,33 +182,34 @@ public class MatchAnimator : MonoBehaviour
         }
     }
 
-    void UpdatePlayerPositions(int iteration)
+void UpdatePlayerPositions(int iteration)
 {
     int index = 0;
 
     // Kickoff team
-    foreach (var player in simulationResult.kickOffTeam)
+    foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
     {
         if (iteration < player.positions.Count)
         {
             var pos = player.positions[iteration].position;
-            Vector2 newPos = ConvertToPitchPosition(new Vector2(pos.x, pos.y), false); // false = not second team
-            playerDots[index].transform.localPosition = new Vector3(newPos.x, newPos.y, 0);
+            Vector2 newPos = new Vector2(pos.x, pos.y); // DIRECT placement, no ConvertToPitchPosition
+            playerDots[index].GetComponent<RectTransform>().anchoredPosition = newPos;
         }
         index++;
     }
 
     // Second team
-    foreach (var player in simulationResult.secondTeam)
+    foreach (var player in simulationResult.playersOverIterations.secondTeam)
     {
         if (iteration < player.positions.Count)
         {
             var pos = player.positions[iteration].position;
-            Vector2 newPos = ConvertToPitchPosition(new Vector2(pos.x, pos.y), true); // true = second team
-            playerDots[index].transform.localPosition = new Vector3(newPos.x, newPos.y, 0);
+            Vector2 newPos = new Vector2(pos.x, pos.y); // DIRECT placement, no ConvertToPitchPosition
+            playerDots[index].GetComponent<RectTransform>().anchoredPosition = newPos;
         }
         index++;
     }
 }
+
 
 }

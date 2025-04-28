@@ -129,14 +129,21 @@ function completeTackleWhenCloseNoBall(matchDetails, thisPlayer, team, opp) {
 }
 
 function completeMovement(matchDetails, currentPOS, move) {
+  if (!matchDetails || !matchDetails.pitchSize) {
+    console.error('ERROR: matchDetails.pitchSize missing in completeMovement! Skipping movement.')
+    return currentPOS
+  }
+
   if (currentPOS[0] != 'NP') {
     let intendedMovementX = currentPOS[0] + move[0]
     let intendedMovementY = currentPOS[1] + move[1]
     if (intendedMovementX < matchDetails.pitchSize[0] + 1 && intendedMovementX > -1) currentPOS[0] += move[0]
     if (intendedMovementY < matchDetails.pitchSize[1] + 1 && intendedMovementY > -1) currentPOS[1] += move[1]
   }
+
   return currentPOS
 }
+
 
 function closestPlayerActionBallX(ballToPlayerX) {
   if (common.isBetween(ballToPlayerX, -30, 30) === false) {
@@ -221,8 +228,14 @@ function updateInformation(matchDetails, newPosition) {
 }
 
 function getMovement(player, action, opposition, ballX, ballY, matchDetails) {
+  if (!matchDetails || !matchDetails.ball) {
+    console.error('ERROR: matchDetails.ball is missing in getMovement! Skipping movement.')
+    return [0, 0]
+  }
+
   const { position } = matchDetails.ball
   const ballActions = [`shoot`, `throughBall`, `pass`, `cross`, `cleared`, `boot`, `penalty`]
+
   if (action === `wait` || ballActions.includes(action)) return [0, 0]
   else if (action === `tackle` || action === `slide`) {
     return getTackleMovement(ballX, ballY)
@@ -234,6 +247,7 @@ function getMovement(player, action, opposition, ballX, ballY, matchDetails) {
     return getSprintMovement(matchDetails, player, ballX, ballY)
   }
 }
+
 
 function getTackleMovement(ballX, ballY) {
   let move = [0, 0]
