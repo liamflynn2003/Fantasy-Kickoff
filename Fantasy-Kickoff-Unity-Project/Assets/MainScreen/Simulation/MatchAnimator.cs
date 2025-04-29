@@ -8,89 +8,76 @@ using Newtonsoft.Json;
 
 public class MatchAnimator : MonoBehaviour
 {
-[System.Serializable]
-public class MatchSimulationResult
-{
-    public MatchDetails matchDetails;
-    public int totalIterations;
-    public PlayersOverIterations playersOverIterations;
-}
+    [System.Serializable]
+    public class MatchSimulationResult
+    {
+        public MatchDetails matchDetails;
+        public int totalIterations;
+        public PlayersOverIterations playersOverIterations;
+    }
 
-[System.Serializable]
-public class PlayersOverIterations
-{
-    public List<PlayerData> kickOffTeam;
-    public List<PlayerData> secondTeam;
-}
+    [System.Serializable]
+    public class PlayersOverIterations
+    {
+        public List<PlayerData> kickOffTeam;
+        public List<PlayerData> secondTeam;
+    }
 
-[System.Serializable]
-public class MatchDetails
-{
+    [System.Serializable]
+    public class MatchDetails { }
 
-}
+    [System.Serializable]
+    public class PlayerData
+    {
+        public string name;
+        public string position;
+        public List<PlayerPosition> positions;
+    }
 
-[System.Serializable]
-public class PlayerData
-{
-    public string name;
-    public string position;
-    public List<PlayerPosition> positions;
-}
+    [System.Serializable]
+    public class PlayerPosition
+    {
+        public int iteration;
+        public PositionData position;
+    }
 
-[System.Serializable]
-public class PlayerPosition
-{
-    public int iteration;
-    public PositionData position;
-}
-
-[System.Serializable]
-public class PositionData
-{
-    public float x;
-    public float y;
-}
+    [System.Serializable]
+    public class PositionData
+    {
+        public float x;
+        public float y;
+    }
 
     public GameObject playerPrefab;
     public Transform playersParent;
 
     private MatchSimulationResult simulationResult;
     private List<GameObject> playerDots = new List<GameObject>();
+
+    private float pitchWidth = 680f;
+    private float pitchHeight = 1050f;
+
     private int currentIteration = 0;
     private int maxIterations = 2000;
-
     public float timeBetweenIterations = 0.05f; // Speed of animation
 
     void Start()
-    {   
-
+    {
         RectTransform pitchRect = playersParent.GetComponent<RectTransform>();
-float width = pitchRect.rect.width;
-float height = pitchRect.rect.height;
+        pitchWidth = pitchRect.rect.width;
+        pitchHeight = pitchRect.rect.height;
 
-// Corners relative to center
-Vector2 topLeft = new Vector2(-width/2f, height/2f);
-Vector2 topRight = new Vector2(width/2f, height/2f);
-Vector2 bottomLeft = new Vector2(-width/2f, -height/2f);
-Vector2 bottomRight = new Vector2(width/2f, -height/2f);
+        LoadSimulationData();
 
-Vector3 pitchCenter = playersParent.localPosition;
-        Debug.Log($"Pitch center localPosition: {pitchCenter}");
-
-Debug.Log($"TopLeft: {topLeft}, TopRight: {topRight}, BottomLeft: {bottomLeft}, BottomRight: {bottomRight}");
-
-    LoadSimulationData();
-
-    if (simulationResult != null)
-    {
-        SpawnPlayers();
-        //StartCoroutine(PlayMatch());  
-    }
-    else
-    {
-        Debug.LogError("Simulation data could not be loaded. Check if the JSON file exists and is valid.");
-    }
-    
+        if (simulationResult != null)
+        {
+            SpawnPlayers();
+            // StartCoroutine(PlayMatch());
+        }
+        else
+        {
+            Debug.LogError("Simulation data could not be loaded. Check if the JSON file exists and is valid.");
+        }
     }
 
     void LoadSimulationData()
@@ -107,70 +94,62 @@ Debug.Log($"TopLeft: {topLeft}, TopRight: {topRight}, BottomLeft: {bottomLeft}, 
         }
     }
 
-void SpawnPlayers()
-{
-    if (simulationResult == null || simulationResult.playersOverIterations == null || playerPrefab == null || playersParent == null)
+    void SpawnPlayers()
     {
-        Debug.LogError("Missing important references in MatchAnimator!");
-        return;
+        if (simulationResult == null || simulationResult.playersOverIterations == null || playerPrefab == null || playersParent == null)
+        {
+            Debug.LogError("Missing important references in MatchAnimator!");
+            return;
+        }
+
+        // KickOffTeam
+        foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
+        {
+            GameObject dot = Instantiate(playerPrefab, playersParent);
+
+            if (player.positions != null && player.positions.Count > 0)
+            {
+                var firstPos = player.positions[0].position;
+                dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
+            }
+            else
+            {
+                dot.name = $"TeamOne_{player.name}_NO_POS";
+            }
+
+            Image circleImage = dot.GetComponentInChildren<Image>();
+            if (circleImage != null)
+            {
+                circleImage.color = Color.red;
+            }
+
+            playerDots.Add(dot);
+        }
+
+        // SecondTeam
+        foreach (var player in simulationResult.playersOverIterations.secondTeam)
+        {
+            GameObject dot = Instantiate(playerPrefab, playersParent);
+
+            if (player.positions != null && player.positions.Count > 0)
+            {
+                var firstPos = player.positions[0].position;
+                dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
+            }
+            else
+            {
+                dot.name = $"TeamTwo_{player.name}_NO_POS";
+            }
+
+            Image circleImage = dot.GetComponentInChildren<Image>();
+            if (circleImage != null)
+            {
+                circleImage.color = Color.blue;
+            }
+
+            playerDots.Add(dot);
+        }
     }
-
-    // KickOffTeam
-    foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
-    {
-        GameObject dot = Instantiate(playerPrefab, playersParent);
-
-        if (player.positions != null && player.positions.Count > 0)
-        {
-            var firstPos = player.positions[0].position;
-            dot.name = $"TeamOne_{player.name}_({firstPos.x},{firstPos.y})";
-
-            // SWAP X and Y
-            dot.GetComponent<RectTransform>().anchoredPosition = new Vector2(firstPos.y, firstPos.x);
-        }
-        else
-        {
-            dot.name = $"TeamOne_{player.name}_NO_POS";
-        }
-
-        Image circleImage = dot.GetComponentInChildren<Image>();
-        if (circleImage != null)
-        {
-            circleImage.color = Color.red;
-        }
-
-        playerDots.Add(dot);
-    }
-
-    // SecondTeam
-    foreach (var player in simulationResult.playersOverIterations.secondTeam)
-    {
-        GameObject dot = Instantiate(playerPrefab, playersParent);
-
-        if (player.positions != null && player.positions.Count > 0)
-        {
-            var firstPos = player.positions[0].position;
-            dot.name = $"TeamTwo_{player.name}_({firstPos.x},{firstPos.y})";
-
-            // SWAP X and Y
-            dot.GetComponent<RectTransform>().anchoredPosition = new Vector2(firstPos.y, firstPos.x);
-        }
-        else
-        {
-            dot.name = $"TeamTwo_{player.name}_NO_POS";
-        }
-
-        Image circleImage = dot.GetComponentInChildren<Image>();
-        if (circleImage != null)
-        {
-            circleImage.color = Color.blue;
-        }
-
-        playerDots.Add(dot);
-    }
-}
-
-
 
     IEnumerator PlayMatch()
     {
@@ -182,34 +161,39 @@ void SpawnPlayers()
         }
     }
 
-void UpdatePlayerPositions(int iteration)
-{
-    int index = 0;
-
-    // Kickoff team
-    foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
+    void UpdatePlayerPositions(int iteration)
     {
-        if (iteration < player.positions.Count)
+        int kickoffIndex = 0;
+        int secondTeamIndex = simulationResult.playersOverIterations.kickOffTeam.Count;
+
+        // Kickoff team
+        foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
         {
-            var pos = player.positions[iteration].position;
-            Vector2 newPos = new Vector2(pos.x, pos.y); // DIRECT placement, no ConvertToPitchPosition
-            playerDots[index].GetComponent<RectTransform>().anchoredPosition = newPos;
+            if (iteration < player.positions.Count)
+            {
+                var pos = player.positions[iteration].position;
+                playerDots[kickoffIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(pos.x, pos.y);
+            }
+            kickoffIndex++;
         }
-        index++;
+
+        // Second team
+        foreach (var player in simulationResult.playersOverIterations.secondTeam)
+        {
+            if (iteration < player.positions.Count)
+            {
+                var pos = player.positions[iteration].position;
+                playerDots[secondTeamIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(pos.x, pos.y);
+            }
+            secondTeamIndex++;
+        }
     }
 
-    // Second team
-    foreach (var player in simulationResult.playersOverIterations.secondTeam)
+    private Vector2 CenteredPosition(float engineX, float engineY)
     {
-        if (iteration < player.positions.Count)
-        {
-            var pos = player.positions[iteration].position;
-            Vector2 newPos = new Vector2(pos.x, pos.y); // DIRECT placement, no ConvertToPitchPosition
-            playerDots[index].GetComponent<RectTransform>().anchoredPosition = newPos;
-        }
-        index++;
+        float centeredX = engineX - (pitchWidth / 2f);
+        float centeredY = engineY - (pitchHeight / 2f);
+        return new Vector2(centeredX, centeredY);
     }
-}
-
 
 }

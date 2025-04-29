@@ -129,13 +129,14 @@ public class MatchRequest
         {
             name = "TeamOne",
             rating = CalculateTeamRating(teamOneDict.Values),
-            players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamOneDict.Values))
+            players = ConvertToJsonData(BuildOrderedPlayerList(teamOneDict))
         };
+
         team2 = new TeamData
         {
             name = "TeamTwo",
             rating = CalculateTeamRating(teamTwoDict.Values),
-            players = ConvertToJsonData(new List<PlayerListManager.PlayerData>(teamTwoDict.Values))
+            players = ConvertToJsonData(BuildOrderedPlayerList(teamTwoDict))
         };
         pitchDetails = new PitchDetails
         {
@@ -144,6 +145,26 @@ public class MatchRequest
             goalWidth = 100
         };
     }
+
+    private List<PlayerListManager.PlayerData> BuildOrderedPlayerList(Dictionary<int, PlayerListManager.PlayerData> teamDict)
+{
+    List<PlayerListManager.PlayerData> orderedList = new List<PlayerListManager.PlayerData>();
+
+    for (int i = 0; i <= 10; i++)
+    {
+        if (teamDict.ContainsKey(i))
+        {
+            orderedList.Add(teamDict[i]);
+        }
+        else
+        {
+            Debug.LogError($"Missing player at slot {i}!");
+        }
+    }
+
+    return orderedList;
+}
+
 
     private static int CalculateTeamRating(IEnumerable<PlayerListManager.PlayerData> players)
     {

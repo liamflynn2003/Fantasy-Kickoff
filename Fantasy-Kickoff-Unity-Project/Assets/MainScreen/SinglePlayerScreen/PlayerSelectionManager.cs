@@ -12,23 +12,38 @@ public class PlayerSelectionManager : MonoBehaviour
     private Dictionary<int, PlayerListManager.PlayerData> selectedTeamOne = new Dictionary<int, PlayerListManager.PlayerData>();
     private Dictionary<int, PlayerListManager.PlayerData> selectedTeamTwo = new Dictionary<int, PlayerListManager.PlayerData>();
 
-    public void AssignPlayer(int positionIndex, PlayerListManager.PlayerData player, bool isTeamOne)
+public void AssignPlayer(int positionIndex, PlayerListManager.PlayerData player, bool isTeamOne)
+{
+    if (string.IsNullOrEmpty(player.name))
+{
+    player.name = player.player.firstname + " " + player.player.lastname;
+}
+
+    if (IsPlayerAlreadySelected(player, isTeamOne))
     {
-        if (isTeamOne)
-        {   
-            player.position = CalculatePosition(positionIndex);
-            player.currentPOS= CalculateStartPos(positionIndex, isTeamOne);
-            selectedTeamOne[positionIndex] = player;
-            UpdateUI(teamOnePlayers[positionIndex], player);
-        }
-        else
-        {
-            player.position = CalculatePosition(positionIndex);
-            player.currentPOS=CalculateStartPos(positionIndex, isTeamOne);
-            selectedTeamTwo[positionIndex] = player;
-            UpdateUI(teamTwoPlayers[positionIndex], player);
-        }
+        Debug.LogWarning($"Player {player.name} is already selected in {(isTeamOne ? "Team One" : "Team Two")}.");
+        return;
     }
+
+    if (isTeamOne)
+    {
+        Debug.Log($"[AssignPlayer] Assigning {player.name} to Team One at position index {positionIndex}.");
+        player.position = CalculatePosition(positionIndex);
+        player.currentPOS = CalculateStartPos(positionIndex, isTeamOne);
+        selectedTeamOne[positionIndex] = player;
+        UpdateUI(teamOnePlayers[positionIndex], player);
+    }
+    else
+    {
+        Debug.Log($"[AssignPlayer] Assigning {player.name} to Team Two at position index {positionIndex}.");
+        player.position = CalculatePosition(positionIndex);
+        player.currentPOS = CalculateStartPos(positionIndex, isTeamOne);
+        selectedTeamTwo[positionIndex] = player;
+        UpdateUI(teamTwoPlayers[positionIndex], player);
+    }
+}
+
+
 
     public string CalculatePosition(int positionIndex)
     {
@@ -49,6 +64,22 @@ public class PlayerSelectionManager : MonoBehaviour
         }
     }
 
+    public bool IsPlayerAlreadySelected(PlayerListManager.PlayerData player, bool isTeamOne)
+    {
+    var team = isTeamOne ? selectedTeamOne : selectedTeamTwo;
+
+    foreach (var assignedPlayer in team.Values)
+    {
+        if (assignedPlayer.name == player.name)
+        {
+            return true;
+        }
+    }
+
+    return false;
+    }
+
+
     public Vector2 CalculateStartPos(int positionIndex, bool isTeamOne)
     {
         Vector2 pos = Vector2.zero;
@@ -57,22 +88,20 @@ public class PlayerSelectionManager : MonoBehaviour
         case 0: pos = new Vector2(340, 0); break; // GK (Center of 680 width)
 
         // DEFENDERS (LB, LCB, RCB, RB)
-        case 1: pos = new Vector2(100, 80); break; // LB
+        case 1: pos = new Vector2(80, 80); break; // RB
         case 2: pos = new Vector2(230, 80); break; // LCB
         case 3: pos = new Vector2(420, 80); break; // RCB
-        case 4: pos = new Vector2(600, 80); break; // RB
+        case 4: pos = new Vector2(600, 80); break; // lb
 
         // MIDFIELDERS (LM, CM, RM)
-        case 5: pos = new Vector2(200, 270); break; // LM
+        case 5: pos = new Vector2(200, 270); break; // CM
         case 6: pos = new Vector2(340, 270); break; // CM
-        case 7: pos = new Vector2(480, 270); break; // RM
+        case 7: pos = new Vector2(480, 270); break; // CM
 
         // FORWARDS (LW, ST, RW)
         case 8: pos = new Vector2(200, 500); break; // LW
         case 9: pos = new Vector2(340, 500); break; // ST
         case 10: pos = new Vector2(480, 500); break; // RW
-
-        default: pos = new Vector2(340, 270); break; // fallback: center-midfield
     }
         return pos;
     }
@@ -118,47 +147,55 @@ public class PlayerSelectionManager : MonoBehaviour
     }
 
     private void PopulateTeam(List<PlayerJsonData> players, bool isTeamOne)
-{
-    GameObject[] teamPlayers = isTeamOne ? teamOnePlayers : teamTwoPlayers;
-
-    List<PlayerJsonData> sortedPlayers = SortPlayersForAssignment(players);
-
-    for (int i = 0; i < sortedPlayers.Count && i < teamPlayers.Length; i++)
     {
-        PlayerJsonData playerJson = sortedPlayers[i];
-        PlayerListManager.PlayerData playerData = new PlayerListManager.PlayerData
+        GameObject[] teamPlayers = isTeamOne ? teamOnePlayers : teamTwoPlayers;
+
+        for (int i = 0; i < players.Count && i < teamPlayers.Length; i++)
         {
-            name = playerJson.name,
-            position = playerJson.position,
-            rating = 50,
-            skill = ConvertToSkill(playerJson.skill),
-            currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
-            fitness = playerJson.fitness,
-            injured = playerJson.injured
-        };
+            PlayerJsonData playerJson = players[i];
+            PlayerListManager.PlayerData playerData = new PlayerListManager.PlayerData
+            {
+                name = playerJson.name,
+                position = playerJson.position,
+                rating = 50,
+                skill = ConvertToSkill(playerJson.skill),
+                currentPOS = new Vector2(playerJson.currentPOS[0], playerJson.currentPOS[1]),
+                fitness = playerJson.fitness,
+                injured = playerJson.injured
+            };
 
-        AssignPlayer(i, playerData, isTeamOne);
+            AssignPlayer(i, playerData, isTeamOne);
+        }
     }
-}
 
-private List<PlayerJsonData> SortPlayersForAssignment(List<PlayerJsonData> players)
+public bool IsTeamValid(bool isTeamOne)
 {
-    List<PlayerJsonData> sorted = new List<PlayerJsonData>();
+    Dictionary<int, PlayerListManager.PlayerData> team = isTeamOne ? selectedTeamOne : selectedTeamTwo;
 
-    sorted.Add(players.Find(p => p.position == "GK"));
-    sorted.Add(players.Find(p => p.position == "RB"));
-    sorted.Add(players.Find(p => p.position == "CB"));
-    sorted.Add(players.FindLast(p => p.position == "CB"));
-    sorted.Add(players.Find(p => p.position == "LB"));
-    sorted.Add(players.Find(p => p.position == "CM"));
-    sorted.Add(players.FindLast(p => p.position == "CM"));
-    sorted.Add(players.Find(p => p.position == "CM"));
-    sorted.Add(players.Find(p => p.position == "ST"));
-    sorted.Add(players.FindLast(p => p.position == "ST"));
-    sorted.Add(players.Find(p => p.position == "ST"));
+    // Check if all 11 required slots (0 to 10) are filled
+    for (int i = 0; i <= 10; i++)
+    {
+        if (!team.ContainsKey(i))
+        {
+            Debug.LogWarning($"Team {(isTeamOne ? "One" : "Two")} is missing player at position index {i}.");
+            return false;
+        }
+    }
 
-    return sorted;
+    // Check for duplicate players by name
+    HashSet<string> playerNames = new HashSet<string>();
+    foreach (var player in team.Values)
+    {
+        if (!playerNames.Add(player.name))
+        {
+            Debug.LogWarning($"Duplicate player {player.name} found in Team {(isTeamOne ? "One" : "Two")}!");
+            return false;
+        }
+    }
+
+    return true; // ✅ All slots filled and no duplicates
 }
+
 
 
 
