@@ -24,7 +24,17 @@ public class MatchAnimator : MonoBehaviour
     }
 
     [System.Serializable]
-    public class MatchDetails { }
+public class MatchDetails
+{
+    public BallDetails ball;
+}
+
+[System.Serializable]
+public class BallDetails
+{
+    public List<BallPosition> ballOverIterationsHistory;
+}
+
 
     [System.Serializable]
     public class PlayerData
@@ -48,18 +58,27 @@ public class MatchAnimator : MonoBehaviour
         public float y;
     }
 
+    [System.Serializable]
+    public class BallPosition
+    {
+        public int iteration;
+        public List<float> position; // [x, y, z]
+    }
+
     public GameObject playerPrefab;
+    public GameObject ballPrefab;
     public Transform playersParent;
 
     private MatchSimulationResult simulationResult;
-    private List<GameObject> playerDots = new List<GameObject>();
+    private List<AnimatedPlayer> animatedPlayers = new List<AnimatedPlayer>();
+    private AnimatedBall animatedBall;
 
     private float pitchWidth = 680f;
     private float pitchHeight = 1050f;
 
     private int currentIteration = 0;
     private int maxIterations = 2000;
-    public float timeBetweenIterations = 0.05f; // Speed of animation
+    public float timeBetweenIterations = 0.00005f;
 
     void Start()
     {
@@ -71,8 +90,8 @@ public class MatchAnimator : MonoBehaviour
 
         if (simulationResult != null)
         {
-            SpawnPlayers();
-            // StartCoroutine(PlayMatch());
+            SpawnPlayersAndBall();
+            StartCoroutine(PlayMatch());
         }
         else
         {
@@ -94,60 +113,57 @@ public class MatchAnimator : MonoBehaviour
         }
     }
 
-    void SpawnPlayers()
+    void SpawnPlayersAndBall()
     {
-        if (simulationResult == null || simulationResult.playersOverIterations == null || playerPrefab == null || playersParent == null)
+        if (simulationResult == null || simulationResult.playersOverIterations == null)
         {
-            Debug.LogError("Missing important references in MatchAnimator!");
+            Debug.LogError("Simulation result or players missing!");
             return;
         }
 
-        // KickOffTeam
+        // Kickoff team
         foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
         {
             GameObject dot = Instantiate(playerPrefab, playersParent);
-
-            if (player.positions != null && player.positions.Count > 0)
-            {
-                var firstPos = player.positions[0].position;
-                dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
-            }
-            else
-            {
-                dot.name = $"TeamOne_{player.name}_NO_POS";
-            }
+            var firstPos = player.positions[0].position;
+            dot.name = $"TeamOne_{player.name}_({firstPos.x},{firstPos.y})";
+            dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
 
             Image circleImage = dot.GetComponentInChildren<Image>();
-            if (circleImage != null)
-            {
-                circleImage.color = Color.red;
-            }
+            if (circleImage != null) circleImage.color = Color.red;
 
-            playerDots.Add(dot);
+            animatedPlayers.Add(new AnimatedPlayer(dot, player.positions));
         }
 
-        // SecondTeam
+        // Second team
         foreach (var player in simulationResult.playersOverIterations.secondTeam)
         {
             GameObject dot = Instantiate(playerPrefab, playersParent);
-
-            if (player.positions != null && player.positions.Count > 0)
-            {
-                var firstPos = player.positions[0].position;
-                dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
-            }
-            else
-            {
-                dot.name = $"TeamTwo_{player.name}_NO_POS";
-            }
+            var firstPos = player.positions[0].position;
+            dot.name = $"TeamTwo_{player.name}_({firstPos.x},{firstPos.y})";
+            dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstPos.x, firstPos.y);
 
             Image circleImage = dot.GetComponentInChildren<Image>();
-            if (circleImage != null)
-            {
-                circleImage.color = Color.blue;
-            }
+            if (circleImage != null) circleImage.color = Color.blue;
 
-            playerDots.Add(dot);
+            animatedPlayers.Add(new AnimatedPlayer(dot, player.positions));
+        }
+        if (simulationResult.matchDetails.ball.ballOverIterationsHistory == null || 
+    simulationResult.matchDetails.ball.ballOverIterationsHistory.Count == 0)
+{
+    Debug.LogError("Ball position history is missing!");
+    return;
+}
+
+        // Spawn ball
+        if (simulationResult.matchDetails != null && simulationResult.matchDetails.ball.ballOverIterationsHistory != null)
+        {
+            GameObject ballDot = Instantiate(ballPrefab, playersParent);
+            ballDot.name = "Ball";
+            var firstBallPos = simulationResult.matchDetails.ball.ballOverIterationsHistory[0].position;
+            ballDot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(firstBallPos[0], firstBallPos[1]);
+
+            animatedBall = new AnimatedBall(ballDot, simulationResult.matchDetails.ball.ballOverIterationsHistory);
         }
     }
 
@@ -156,38 +172,61 @@ public class MatchAnimator : MonoBehaviour
         while (currentIteration < maxIterations)
         {
             UpdatePlayerPositions(currentIteration);
+            UpdateBallPosition(currentIteration);
+
             currentIteration++;
             yield return new WaitForSeconds(timeBetweenIterations);
         }
     }
 
-    void UpdatePlayerPositions(int iteration)
+private void UpdatePlayerPositions(int iteration)
+{
+    foreach (var player in animatedPlayers)
     {
-        int kickoffIndex = 0;
-        int secondTeamIndex = simulationResult.playersOverIterations.kickOffTeam.Count;
-
-        // Kickoff team
-        foreach (var player in simulationResult.playersOverIterations.kickOffTeam)
+        if (player.currentIndex < player.positions.Count)
         {
-            if (iteration < player.positions.Count)
+            var playerPos = player.positions[player.currentIndex];
+            if (playerPos.iteration == iteration)
             {
-                var pos = player.positions[iteration].position;
-                playerDots[kickoffIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(pos.x, pos.y);
+                player.lastPosition = player.targetPosition;
+                player.targetPosition = new Vector2(playerPos.position.x, playerPos.position.y);
+                player.lerpProgress = 0f;
+                player.currentIndex++;
             }
-            kickoffIndex++;
-        }
 
-        // Second team
-        foreach (var player in simulationResult.playersOverIterations.secondTeam)
-        {
-            if (iteration < player.positions.Count)
-            {
-                var pos = player.positions[iteration].position;
-                playerDots[secondTeamIndex].GetComponent<RectTransform>().anchoredPosition = new Vector2(pos.x, pos.y);
-            }
-            secondTeamIndex++;
+            player.lerpProgress += Time.deltaTime / timeBetweenIterations;
+            player.lerpProgress = Mathf.Clamp01(player.lerpProgress);
+
+            Vector2 interpolatedPos = Vector2.Lerp(player.lastPosition, player.targetPosition, player.lerpProgress);
+            player.dot.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(interpolatedPos.x, interpolatedPos.y);
         }
     }
+}
+
+private void UpdateBallPosition(int iteration)
+{
+    if (animatedBall != null)
+    {
+        if (animatedBall.currentIndex < animatedBall.positions.Count)
+        {
+            var ballPos = animatedBall.positions[animatedBall.currentIndex];
+            if (ballPos.iteration == iteration)
+            {
+                animatedBall.lastPosition = animatedBall.targetPosition;
+                animatedBall.targetPosition = new Vector2(ballPos.position[0], ballPos.position[1]);
+                animatedBall.lerpProgress = 0f;
+                animatedBall.currentIndex++;
+            }
+
+            animatedBall.lerpProgress += Time.deltaTime / timeBetweenIterations;
+            animatedBall.lerpProgress = Mathf.Clamp01(animatedBall.lerpProgress);
+
+            Vector2 interpolatedBallPos = Vector2.Lerp(animatedBall.lastPosition, animatedBall.targetPosition, animatedBall.lerpProgress);
+            animatedBall.ballObject.GetComponent<RectTransform>().anchoredPosition = CenteredPosition(interpolatedBallPos.x, interpolatedBallPos.y);
+        }
+    }
+}
+
 
     private Vector2 CenteredPosition(float engineX, float engineY)
     {
@@ -195,5 +234,47 @@ public class MatchAnimator : MonoBehaviour
         float centeredY = engineY - (pitchHeight / 2f);
         return new Vector2(centeredX, centeredY);
     }
+
+private class AnimatedPlayer
+{
+    public GameObject dot;
+    public List<PlayerPosition> positions;
+    public int currentIndex = 0;
+    public Vector2 lastPosition;
+    public Vector2 targetPosition;
+    public float lerpProgress = 0f;
+
+    public AnimatedPlayer(GameObject dotObject, List<PlayerPosition> posList)
+    {
+        dot = dotObject;
+        positions = posList;
+        if (positions.Count > 0)
+        {
+            lastPosition = new Vector2(positions[0].position.x, positions[0].position.y);
+            targetPosition = lastPosition;
+        }
+    }
+}
+
+private class AnimatedBall
+{
+    public GameObject ballObject;
+    public List<BallPosition> positions;
+    public int currentIndex = 0;
+    public Vector2 lastPosition;
+    public Vector2 targetPosition;
+    public float lerpProgress = 0f;
+
+    public AnimatedBall(GameObject obj, List<BallPosition> posList)
+    {
+        ballObject = obj;
+        positions = posList;
+        if (positions.Count > 0)
+        {
+            lastPosition = new Vector2(posList[0].position[0], posList[0].position[1]);
+            targetPosition = lastPosition;
+        }
+    }
+}
 
 }
