@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "6282324674",
+    "project_id": "fantasy-kickoff",
+    "storage_bucket": "fantasy-kickoff.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:6282324674:android:888750a84e50da320de95b",
+        "android_client_info": {
+          "package_name": "com.LiamFlynn.FantasyKickoff"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJZUuI5jvY8xUDMn3RuzmzRuTnvqCz28I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
