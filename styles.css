@@ -1,0 +1,108 @@
+/* CSS Styling for Liam Flynn FYP GitHub Webpage*/
+
+/* Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* Header Styling */
+header {
+    background-color: #003366;
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+}
+
+header h1 {
+    font-size: 32px;
+    margin: 0 0 10px;
+}
+
+header h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
+/* Project Summary Styling */
+.project-summary {
+    padding: 20px;
+    background-color: #ffffff;
+    text-align: center;
+    font-size: 16px;
+    max-width: 800px;
+    margin: 40px auto 0;
+    line-height: 1.5;
+    color: #333;
+}
+
+.project-summary p {
+    margin: 0;
+}
+
+/* Main Logo Styling */
+.main-logo-section {
+    text-align: center;
+    padding: 40px 0;
+}
+
+.main-logo {
+    max-width: 30%;
+    height: auto;   
+    display: block;  
+    margin: 0 auto; 
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+
+/* Link Images Section */
+.link-images-section {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px 20px;
+    align-items: center;
+}
+
+/* Link Card Styling */
+.link-card {
+    text-align: center;
+    max-width: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+
+.link-card img {
+    max-width: 100%;
+    height: auto;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    padding: 5px;
+    background-color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.link-card img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.link-card a {
+    display: block;
+    margin-top: 10px;
+    text-decoration: none;
+    color: #003366;
+    font-weight: bold;
+}
+
+.link-card a:hover {
+    color: #0055a5;
+    text-decoration: underline;
+}

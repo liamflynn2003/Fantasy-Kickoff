@@ -1,0 +1,81 @@
+# === Unity Project Ignored Folders ===
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+**/[Rr]ecordings/
+**/[Tt]est[Rr]esults/
+
+# === Ignore .unitypackage and Build Artifacts ===
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# === IDE & Tooling Artifacts ===
+.vs/
+.gradle/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# === Meta files & Reports ===
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+sysinfo.txt
+*.log
+*.stacktrace
+*.profiler
+
+# === Addressables (packed and temp files) ===
+**/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+**/[Aa]ssets/[Ss]treamingAssets/aa.meta
+**/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# === JetBrains Rider Plugin ===
+**/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# === Firebase Unity SDK Exclusions ===
+**/Assets/StreamingAssets/GoogleService-*.json
+**/Assets/Firebase/
+**/Assets/Plugins/Firebase/
+**/Assets/ExternalDependencyManager/
+**/Assets/PlayServicesResolver/
+**/Assets/GeneratedLocalRepo/
+**/firebase_unity_sdk/
+**/*.so
+**/*.bundle
+
+# Videos
+*.mkv
+*.mp4
+*.avi
+
+# Native binaries
+*.so
+*.bundle
+
+# Builds & Firebase
+Build/
+Firebase/
+Assets/Plugins/Firebase/
+Assets/Plugins/Android/Firebase/
+Assets/Plugins/iOS/Firebase/    
+Assets/Plugins/iOS/Google/

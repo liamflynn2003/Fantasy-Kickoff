@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id">
+  <string name="gcm_defaultSenderId" translatable="false">6282324674</string>
+  <string name="google_storage_bucket" translatable="false">fantasy-kickoff.firebasestorage.app</string>
+  <string name="project_id" translatable="false">fantasy-kickoff</string>
+  <string name="google_api_key" translatable="false">AIzaSyDJZUuI5jvY8xUDMn3RuzmzRuTnvqCz28I</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDJZUuI5jvY8xUDMn3RuzmzRuTnvqCz28I</string>
+  <string name="google_app_id" translatable="false">1:6282324674:android:888750a84e50da320de95b</string>
+</resources>
