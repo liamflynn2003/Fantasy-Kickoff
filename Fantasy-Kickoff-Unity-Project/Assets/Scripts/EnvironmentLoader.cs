@@ -45,7 +45,6 @@ public class EnvironmentLoader : MonoBehaviour
                 }
             }
             isEnvLoaded = true;
-            Debug.Log("✅ API Key Loaded: " + Environment.GetEnvironmentVariable("API_KEY"));
         }
         else
         {

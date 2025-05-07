@@ -14,7 +14,21 @@ using Firebase.Storage;
 public class MatchDataManager : MonoBehaviour
 {
     public PlayerSelectionManager selectionManager;
-    private string serverUrl = "http://13.219.10.67:3000/simulate";
+    private string serverUrl;
+    private string firebaseStorageUrl;
+    private string firebaseDatabaseUrl;
+
+private void Start()
+{
+    serverUrl = Environment.GetEnvironmentVariable("SERVER_POST_URL");
+    firebaseStorageUrl = Environment.GetEnvironmentVariable("FIREBASE_STORAGE_URL");
+    firebaseDatabaseUrl = Environment.GetEnvironmentVariable("FIREBASE_DATABASE_URL");
+
+    Debug.Log("Loaded serverUrl: " + serverUrl);
+    Debug.Log("Firebase DB URL: " + firebaseDatabaseUrl);
+    Debug.Log("Firebase Storage URL: " + firebaseStorageUrl);
+}
+
     public GameObject loadingScreen; 
 
 public void SimulateMatch()
@@ -55,7 +69,7 @@ public void SimulateMultiplayerMatchFromFirebase()
     }
         FirebaseApp app = FirebaseApp.DefaultInstance;
 
-        var db = FirebaseDatabase.GetInstance(app, "https://fantasy-kickoff-default-rtdb.europe-west1.firebasedatabase.app/");
+        var db = FirebaseDatabase.GetInstance(app, firebaseDatabaseUrl);
         DatabaseReference lobbyRef = db.RootReference.Child("lobbies").Child(lobbyId);
 
         Debug.Log("Fetching lobby data from Firebase...");
@@ -209,7 +223,7 @@ private IEnumerator PostMatchData(string json)
 
                 byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(responseText);
                 Firebase.Storage.FirebaseStorage storage = Firebase.Storage.FirebaseStorage.DefaultInstance;
-                Firebase.Storage.StorageReference storageRef = storage.GetReferenceFromUrl("gs://fantasy-kickoff.firebasestorage.app");
+                Firebase.Storage.StorageReference storageRef = storage.GetReferenceFromUrl(firebaseStorageUrl);
                 Firebase.Storage.StorageReference matchResultRef = storageRef.Child($"matchResults/{PlayerSessionInfo.lobbyId}_matchResult.json");
 
                 var uploadTask = matchResultRef.PutBytesAsync(jsonBytes);
@@ -260,7 +274,7 @@ private void UploadMatchResultToFirebase(string matchJson)
     }
 
     FirebaseApp app = FirebaseApp.DefaultInstance;
-    var db = FirebaseDatabase.GetInstance(app, "https://fantasy-kickoff-default-rtdb.europe-west1.firebasedatabase.app/");
+    var db = FirebaseDatabase.GetInstance(app, firebaseDatabaseUrl);
 
     db.RootReference
         .Child("lobbies").Child(lobbyId).Child("matchResult")

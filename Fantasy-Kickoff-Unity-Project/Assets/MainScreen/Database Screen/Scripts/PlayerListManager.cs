@@ -49,22 +49,8 @@ public class PlayerListManager : MonoBehaviour
 
     // API Configuration
     [Header("API Settings")]
-public string apiKey;
-
-private void Awake()
-{
-    if (string.IsNullOrEmpty(apiKey))
-    {
-        apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
-
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            Debug.LogError("[PlayerListManager] API key not set via Inspector or environment variable!");
-        }
-    }
-}
-
-    private string baseUrl = "https://v3.football.api-sports.io/players?team={0}&season=2024&page={1}";
+private string apiKey;
+private string baseUrl;
 
     // Data Caching
     private Dictionary<int, List<PlayerData>> playerCache = new Dictionary<int, List<PlayerData>>();
@@ -265,6 +251,22 @@ float jumpingScore = Mathf.Clamp(heightCm, 0f, 300f);
 
 private void Start()
 {
+        apiKey = Environment.GetEnvironmentVariable("FOOTBALL_API_KEY");
+    baseUrl = Environment.GetEnvironmentVariable("BASE_PLAYER_FETCH_URL");
+
+    if (string.IsNullOrEmpty(apiKey))
+    {
+        Debug.LogError("[PlayerListManager] API key not set via .env!");
+    }
+
+    if (string.IsNullOrEmpty(baseUrl))
+    {
+        Debug.LogError("[PlayerListManager] BASE_PLAYER_FETCH_URL not set!");
+    }
+
+    Debug.Log($"✅ API key: {apiKey}");
+    Debug.Log($"✅ Base URL: {baseUrl}");
+    
     localDataManager = GetComponent<LocalDataManager>();
     playerCache = localDataManager.LoadCache();
 
@@ -618,7 +620,7 @@ public void ClosePlayerDetailScreen()
 
         if (playerImage.sprite == null)
         {
-            string placeholderUrl = "https://media.api-sports.io/football/players/328089.png";
+            string placeholderUrl = Environment.GetEnvironmentVariable("PLACEHOLDER_IMAGE_URL");
             yield return LoadImageFromUrl(placeholderUrl, playerImage);
         }
     }

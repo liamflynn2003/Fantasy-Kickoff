@@ -826,7 +826,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Player Database
+  m_text: Footballer Database
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
   m_sharedMaterial: {fileID: -6489315694153902105, guid: 4565b2bb8501a5f4bb05d41545681c94, type: 2}
@@ -3718,7 +3718,6 @@ MonoBehaviour:
   keyPassesText: {fileID: 0}
   totalPassesText: {fileID: 0}
   heightText: {fileID: 0}
-  apiKey: 3627ca3e90903c8d47eaf2a687f5589f
 --- !u!1 &401932726 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2801952825894581964, guid: c4ea0085342cc0d4c870fa4c98b541c9, type: 3}
@@ -6915,7 +6914,6 @@ MonoBehaviour:
   keyPassesText: {fileID: 1684869126}
   totalPassesText: {fileID: 340815472}
   heightText: {fileID: 1360429245}
-  apiKey: 3627ca3e90903c8d47eaf2a687f5589f
 --- !u!114 &769785096
 MonoBehaviour:
   m_ObjectHideFlags: 0
